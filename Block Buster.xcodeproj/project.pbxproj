@@ -1,0 +1,358 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 50;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A0247EE522EB7031009C104C /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247EE422EB7031009C104C /* AppDelegate.m */; };
+		A0247EE722EB7031009C104C /* art.scnassets in Resources */ = {isa = PBXBuildFile; fileRef = A0247EE622EB7031009C104C /* art.scnassets */; };
+		A0247EEA22EB7031009C104C /* GameViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247EE922EB7031009C104C /* GameViewController.m */; };
+		A0247EED22EB7031009C104C /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A0247EEB22EB7031009C104C /* Main.storyboard */; };
+		A0247EEF22EB7033009C104C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A0247EEE22EB7033009C104C /* Assets.xcassets */; };
+		A0247EF222EB7033009C104C /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A0247EF022EB7033009C104C /* LaunchScreen.storyboard */; };
+		A0247EF522EB7033009C104C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247EF422EB7033009C104C /* main.m */; };
+		A0247F0322EC71A0009C104C /* Game.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247F0222EC71A0009C104C /* Game.m */; };
+		A09F4EAF22F1F46600A1D1AB /* Block.m in Sources */ = {isa = PBXBuildFile; fileRef = A09F4EAE22F1F46600A1D1AB /* Block.m */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		A0247EE022EB7031009C104C /* Block Buster.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Block Buster.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A0247EE322EB7031009C104C /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		A0247EE422EB7031009C104C /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		A0247EE622EB7031009C104C /* art.scnassets */ = {isa = PBXFileReference; lastKnownFileType = wrapper.scnassets; path = art.scnassets; sourceTree = "<group>"; };
+		A0247EE822EB7031009C104C /* GameViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GameViewController.h; sourceTree = "<group>"; };
+		A0247EE922EB7031009C104C /* GameViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GameViewController.m; sourceTree = "<group>"; };
+		A0247EEC22EB7031009C104C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		A0247EEE22EB7033009C104C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A0247EF122EB7033009C104C /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/LaunchScreen.storyboard; sourceTree = "<group>"; };
+		A0247EF322EB7033009C104C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		A0247EF422EB7033009C104C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		A0247F0122EC71A0009C104C /* Game.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Game.h; sourceTree = "<group>"; };
+		A0247F0222EC71A0009C104C /* Game.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Game.m; sourceTree = "<group>"; };
+		A09F4EAD22F1F46600A1D1AB /* Block.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Block.h; path = "Block Buster/Block.h"; sourceTree = SOURCE_ROOT; };
+		A09F4EAE22F1F46600A1D1AB /* Block.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = Block.m; path = "Block Buster/Block.m"; sourceTree = SOURCE_ROOT; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A0247EDD22EB7031009C104C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A0247ED722EB7031009C104C = {
+			isa = PBXGroup;
+			children = (
+				A0247EE222EB7031009C104C /* Block Buster */,
+				A0247EE122EB7031009C104C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A0247EE122EB7031009C104C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A0247EE022EB7031009C104C /* Block Buster.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A0247EE222EB7031009C104C /* Block Buster */ = {
+			isa = PBXGroup;
+			children = (
+				A09F4EAD22F1F46600A1D1AB /* Block.h */,
+				A09F4EAE22F1F46600A1D1AB /* Block.m */,
+				A0247F0122EC71A0009C104C /* Game.h */,
+				A0247F0222EC71A0009C104C /* Game.m */,
+				A0247EE322EB7031009C104C /* AppDelegate.h */,
+				A0247EE422EB7031009C104C /* AppDelegate.m */,
+				A0247EE622EB7031009C104C /* art.scnassets */,
+				A0247EE822EB7031009C104C /* GameViewController.h */,
+				A0247EE922EB7031009C104C /* GameViewController.m */,
+				A0247EEB22EB7031009C104C /* Main.storyboard */,
+				A0247EEE22EB7033009C104C /* Assets.xcassets */,
+				A0247EF022EB7033009C104C /* LaunchScreen.storyboard */,
+				A0247EF322EB7033009C104C /* Info.plist */,
+				A0247EF422EB7033009C104C /* main.m */,
+			);
+			path = "Block Buster";
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A0247EDF22EB7031009C104C /* Block Buster */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A0247EF822EB7033009C104C /* Build configuration list for PBXNativeTarget "Block Buster" */;
+			buildPhases = (
+				A0247EDC22EB7031009C104C /* Sources */,
+				A0247EDD22EB7031009C104C /* Frameworks */,
+				A0247EDE22EB7031009C104C /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Block Buster";
+			productName = "Block Buster";
+			productReference = A0247EE022EB7031009C104C /* Block Buster.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A0247ED822EB7031009C104C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 1030;
+				ORGANIZATIONNAME = "Joao Santos";
+				TargetAttributes = {
+					A0247EDF22EB7031009C104C = {
+						CreatedOnToolsVersion = 10.3;
+					};
+				};
+			};
+			buildConfigurationList = A0247EDB22EB7031009C104C /* Build configuration list for PBXProject "Block Buster" */;
+			compatibilityVersion = "Xcode 9.3";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = A0247ED722EB7031009C104C;
+			productRefGroup = A0247EE122EB7031009C104C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A0247EDF22EB7031009C104C /* Block Buster */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		A0247EDE22EB7031009C104C /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0247EE722EB7031009C104C /* art.scnassets in Resources */,
+				A0247EF222EB7033009C104C /* LaunchScreen.storyboard in Resources */,
+				A0247EEF22EB7033009C104C /* Assets.xcassets in Resources */,
+				A0247EED22EB7031009C104C /* Main.storyboard in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A0247EDC22EB7031009C104C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A0247F0322EC71A0009C104C /* Game.m in Sources */,
+				A0247EEA22EB7031009C104C /* GameViewController.m in Sources */,
+				A0247EF522EB7033009C104C /* main.m in Sources */,
+				A09F4EAF22F1F46600A1D1AB /* Block.m in Sources */,
+				A0247EE522EB7031009C104C /* AppDelegate.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		A0247EEB22EB7031009C104C /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A0247EEC22EB7031009C104C /* Base */,
+			);
+			name = Main.storyboard;
+			sourceTree = "<group>";
+		};
+		A0247EF022EB7033009C104C /* LaunchScreen.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				A0247EF122EB7033009C104C /* Base */,
+			);
+			name = LaunchScreen.storyboard;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		A0247EF622EB7033009C104C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+			};
+			name = Debug;
+		};
+		A0247EF722EB7033009C104C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 12.4;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A0247EF922EB7033009C104C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 752B3R6JDW;
+				INFOPLIST_FILE = "Block Buster/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "pt.xce.Block-Buster";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		A0247EFA22EB7033009C104C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_STYLE = Automatic;
+				DEVELOPMENT_TEAM = 752B3R6JDW;
+				INFOPLIST_FILE = "Block Buster/Info.plist";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "pt.xce.Block-Buster";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A0247EDB22EB7031009C104C /* Build configuration list for PBXProject "Block Buster" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A0247EF622EB7033009C104C /* Debug */,
+				A0247EF722EB7033009C104C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A0247EF822EB7033009C104C /* Build configuration list for PBXNativeTarget "Block Buster" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A0247EF922EB7033009C104C /* Debug */,
+				A0247EFA22EB7033009C104C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A0247ED822EB7031009C104C /* Project object */;
+}
