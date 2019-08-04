@@ -44,7 +44,7 @@
     NSMutableArray<Block *> *_comboBlocks;
     UIColor *_comboColor;
     NSMutableDictionary<UIColor *, NSNumber *> *_colorCounter;
-    NSTimer *_comboTimer;
+    NSTimer __weak *_comboTimer;
 }
 
 - (instancetype)initWithView:(UIView *)view
@@ -106,7 +106,8 @@
     NSArray<SCNHitTestResult *> *results = [_view hitTest:point options:@{SCNHitTestBoundingBoxOnlyKey: @(YES), SCNHitTestOptionFirstFoundOnly: @(YES)}];
     if (!results.count) return;
     for (SCNHitTestResult *result in results) {
-        Block *block = (Block *) result.node;
+        Block *block = [Block blockForNode:result.node];
+        if (!block) return;;
             [self comboWithBlock:block];
     }
 }
@@ -175,9 +176,7 @@
     NSUInteger counter = number.unsignedIntegerValue;
     ++ counter;
     _colorCounter[color] = @(counter);
-    SCNNode *node = [Block blockWithColor:color];
-    node.position = position;
-    [_worldNode addChildNode:node];
+    [Block blockWithColor:color inWorld:_worldNode atPosition:SCNVector3ToFloat3(position)];
     [self updateWorldTransform];
 }
 
@@ -240,7 +239,6 @@
             comboBlock.lit = NO;
         [_comboBlocks removeAllObjects];
         [_comboTimer invalidate];
-        _comboTimer = nil;
         _comboColor = [UIColor blackColor];
         _view.backgroundColor = _comboColor;
         return;
@@ -265,7 +263,6 @@
         [_comboBlocks removeAllObjects];
     }
     _view.backgroundColor = [UIColor blackColor];
-    _comboTimer = nil;
 }
 
 - (void)despawnBlock:(Block *)block
@@ -277,7 +274,7 @@
     _colorCounter[color] = @(counter);
     if (counter == 1)
         [self spawnBlockWithColor:color];
-    [block removeFromParentNode];
+    [Block dismissBlock:block];
     [self updateWorldTransform];
 }
 

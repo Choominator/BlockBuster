@@ -6,6 +6,7 @@
 //  Copyright © 2019 Joao Santos. All rights reserved.
 //
 
+#import <objc/runtime.h>
 #import "Block.h"
 
 static SCNGeometry *commonGeometry;
@@ -13,9 +14,11 @@ static NSMutableDictionary<UIColor *, NSArray<SCNMaterial *> *> *unlitMaterials;
 static NSMutableDictionary<UIColor *, NSArray<SCNMaterial *> *> *litMaterials;
 static NSMutableDictionary<UIColor *, UIImage *> *emissionImages;
 static NSMutableDictionary<UIColor *, UIImage *> *diffuseImages;
+static Block *blockList;
 
 @interface Block()
 
+- (instancetype)initWithColor:(UIColor *) color inWorld:(SCNNode *)world atPosition:(simd_float3)position;
 - (SCNGeometry *)geometry;
 - (NSArray<SCNMaterial *> *)unlitMaterials;
 - (NSArray<SCNMaterial *> *)litMaterials;
@@ -27,28 +30,66 @@ static NSMutableDictionary<UIColor *, UIImage *> *diffuseImages;
 
 @implementation Block {
     NSArray<SCNMaterial *> *_litMaterials, *_unlitMaterials;
+    SCNNode *_node;
+    Block *_next, __weak *_prev;
 }
 
-- (instancetype)initWithColor:(UIColor *) color
+- (instancetype)initWithColor:(UIColor *) color inWorld:(SCNNode *)world atPosition:(simd_float3)position
 {
     self = [super init];
     if (!self) return nil;
+    if (blockList) {
+        _next = blockList;
+        _prev = blockList->_prev;
+        blockList->_prev = self;
+        _prev->_next = self;
+    } else {
+        _next = self;
+        _prev = self;
+        blockList = self;
+    }
     _color = color;
-    self.geometry = [self geometry];
+    _node = [SCNNode node];
+    _node.geometry = [self geometry];
+    _node.simdPosition = position;
+    objc_setAssociatedObject(_node, (__bridge void *) _node, self, OBJC_ASSOCIATION_ASSIGN);
+    [world addChildNode:_node];
     return self;
 }
 
-+ (instancetype)blockWithColor:(UIColor *) color
++ (instancetype)blockWithColor:(UIColor *) color inWorld:(SCNNode *)world atPosition:(simd_float3)position
 {
-    return [[Block alloc] initWithColor:color];
+    return [[Block alloc] initWithColor:color inWorld:world atPosition:position];
+}
+
++ (void)dismissBlock:(Block *)block
+{
+    if (blockList->_next != blockList) {
+        block->_prev->_next = block->_next;
+        block->_next->_prev = block->_prev;
+    } else {
+        block->_next = nil;
+        block->_prev = nil;
+        blockList = nil;
+    }
+}
+
++ (Block *)blockForNode:(SCNNode *)node
+{
+    return objc_getAssociatedObject(node, (__bridge void *) node);
+}
+
+- (void)dealloc
+{
+    [_node removeFromParentNode];
 }
 
 - (void)setLit:(BOOL)lit
 {
     if (lit)
-        self.geometry.materials = _litMaterials;
+        _node.geometry.materials = _litMaterials;
     else
-        self.geometry.materials = _unlitMaterials;
+        _node.geometry.materials = _unlitMaterials;
     _lit = lit;
 }
 

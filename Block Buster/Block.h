@@ -10,13 +10,14 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
-@interface Block : SCNNode
+@interface Block : NSObject
 
 @property (nonatomic, readonly) UIColor *color;
 @property (nonatomic) BOOL lit;
 
-- (instancetype)initWithColor:(UIColor *) color;
-+ (instancetype)blockWithColor:(UIColor *) color;
++ (instancetype)blockWithColor:(UIColor *) color inWorld:(SCNNode *)world atPosition:(simd_float3)position;
++ (void)dismissBlock:(Block *)block;
++ (Block *)blockForNode:(SCNNode *)node;
 
 @end
 
