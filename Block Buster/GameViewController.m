@@ -21,6 +21,11 @@
     CGPoint _panLastTranslation;
 }
 
+- (void)loadView
+{
+    self.view = [SCNView new];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
@@ -34,16 +39,25 @@
         [tapGestureRecognizer addTarget:self action:@selector(tapGesture:)];
         [self.view addGestureRecognizer:tapGestureRecognizer];
     }
-_game = [Game gameWithView:self.view];
-    self.view.accessibilityTraits = UIAccessibilityTraitAllowsDirectInteraction;
-    self.view.accessibilityFrame = self.view.bounds;
+    _game = [Game gameWithView:self.view];
     self.view.isAccessibilityElement = YES;
+    self.view.accessibilityTraits = UIAccessibilityTraitAllowsDirectInteraction;
 }
+
+- (void)viewDidAppear:(BOOL)animated
+{
+    [super viewDidAppear:animated];
+    self.view.frame = self.view.window.bounds;
+    self.view.accessibilityFrame = self.view.bounds;
+    [_game adjustCameraForSize:self.view.bounds.size];
+}
+
 
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
 {
     [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
     [_game adjustCameraForSize:size];
+    self.view.accessibilityFrame = self.view.bounds;
 }
 
 - (void)panGesture:(UIGestureRecognizer *)gestureRecognizer
