@@ -32,7 +32,6 @@
 - (BOOL)isValidEmptyBlockPosition:(SCNVector3) position;
 - (void)comboWithBlock:(Block *)block;
 - (void)comboTimeout:(NSTimer *)timer;
-- (void)despawnBlock:(Block *)block;
 - (void)updateWorldTransform;
 
 @end
@@ -173,10 +172,12 @@
         position = emptyBlocks[pick].SCNVector3Value;
     }
     NSNumber *number = _colorCounter[color];
-    NSUInteger counter = number.unsignedIntegerValue;
+    NSUInteger counter = 0;
+    if (number)
+        counter = [number unsignedIntegerValue];
     ++ counter;
     _colorCounter[color] = @(counter);
-    [Block blockWithColor:color inWorld:_worldNode atPosition:SCNVector3ToFloat3(position)];
+    [Block createBlockWithColor:color inWorld:_worldNode atPosition:SCNVector3ToFloat3(position)];
     [self updateWorldTransform];
 }
 
@@ -249,7 +250,8 @@
     [_comboColor getRed:&red green:&green blue:&blue alpha:NULL];
     _view.backgroundColor = [UIColor colorWithRed:red * 0.3 green:green * 0.3 blue:blue * 0.3 alpha:1.0];
     block.lit = YES;
-    _comboTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(comboTimeout:) userInfo:nil repeats:NO];
+    if (!_comboTimer)
+        _comboTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(comboTimeout:) userInfo:nil repeats:NO];
 }
 
 - (void)comboTimeout:(NSTimer *)timer
@@ -258,24 +260,19 @@
         _comboBlocks[0].lit = NO;
         [_comboBlocks removeAllObjects];
     } else if (_comboBlocks.count > 1) {
+        NSNumber *number = _colorCounter[_comboColor];
+        NSUInteger counter = [number unsignedIntegerValue];
+        counter -= _comboBlocks.count;
+        _colorCounter[_comboColor] = @(counter);
         for (Block *block in _comboBlocks)
-            [self despawnBlock:block];
+            [Block dismissBlock:block];
         [_comboBlocks removeAllObjects];
+        if (counter == 1)
+            [self spawnBlockWithColor:_comboColor];
+        [self updateWorldTransform];
     }
-    _view.backgroundColor = [UIColor blackColor];
-}
-
-- (void)despawnBlock:(Block *)block
-{
-     UIColor *color = block.color;
-    NSNumber *number = _colorCounter[color];
-    NSUInteger counter = number.unsignedIntegerValue;
-    -- counter;
-    _colorCounter[color] = @(counter);
-    if (counter == 1)
-        [self spawnBlockWithColor:color];
-    [Block dismissBlock:block];
-    [self updateWorldTransform];
+    _comboColor = [UIColor blackColor];
+    _view.backgroundColor = _comboColor;
 }
 
 - (void)updateWorldTransform
