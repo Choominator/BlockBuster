@@ -106,7 +106,7 @@
     if (!results.count) return;
     for (SCNHitTestResult *result in results) {
         Block *block = [Block blockForNode:result.node];
-        if (!block) return;;
+        if (!block || !block.alive) return;;
             [self comboWithBlock:block];
     }
 }
@@ -164,6 +164,8 @@
         while (!foundSuitableNeighbor) {
             NSUInteger pick = [randomSource nextIntWithUpperBound:blockCount];
             SCNNode *neighborBlock = blockNodes[pick];
+            Block *block = [Block blockForNode:neighborBlock];
+            if (!block.alive) continue;
             emptyBlocks = [self emptyNeighborsForPosition:neighborBlock.position];
             if (emptyBlocks.count)
                 foundSuitableNeighbor = YES;

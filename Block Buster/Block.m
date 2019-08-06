@@ -19,7 +19,7 @@ static Block *blockList;
 @interface Block()
 
 - (instancetype)initWithColor:(UIColor *) color inWorld:(SCNNode *)world atPosition:(simd_float3)position;
-- (void)setupGeometry;
+- (SCNGeometry *)setupGeometry;
 - (NSArray<SCNMaterial *> *)unlitMaterials;
 - (NSArray<SCNMaterial *> *)litMaterials;
 - (SCNMaterial *)commonMaterial;
@@ -27,6 +27,7 @@ static Block *blockList;
 - (UIImage *)emissionImage;
 - (SCNAnimation *)setupCreation;
 - (SCNAnimation *)setupDestruction;
+- (void)setupExplosion;
 
 @end
 
@@ -34,6 +35,7 @@ static Block *blockList;
     NSArray<SCNMaterial *> *_litMaterials, *_unlitMaterials;
     SCNNode *_node;
     Block *_next, __weak *_prev;
+    SCNParticleSystem *_explosion;
 }
 
 - (instancetype)initWithColor:(UIColor *) color inWorld:(SCNNode *)world atPosition:(simd_float3)position
@@ -42,12 +44,13 @@ static Block *blockList;
     if (!self) return nil;
     _color = color;
     _node = [SCNNode node];
-    [self setupGeometry];
+    _node.geometry = [self setupGeometry];
     _node.simdPosition = position;
     objc_setAssociatedObject(_node, (__bridge void *) _node, self, OBJC_ASSOCIATION_ASSIGN);
     [world addChildNode:_node];
     SCNAnimation *animation = [self setupCreation];
     [_node addAnimation:animation forKey:nil];
+    [self setupExplosion];
     return self;
 }
 
@@ -64,11 +67,13 @@ static Block *blockList;
         block->_prev->_next = block;
         block->_next->_prev = block;
     }
+    block->_alive = YES;
 }
 
 + (void)dismissBlock:(Block *)block
 {
-    SCNAnimationDidStopBlock actions = ^(SCNAnimation *animation, id<SCNAnimatable> receiver, BOOL completed) {
+    block->_alive = NO;
+    void (^timerActions)(NSTimer *) = ^(NSTimer *timer) {
         if (blockList == block)
             blockList = block->_next;
         block->_prev->_next = block->_next;
@@ -78,8 +83,13 @@ static Block *blockList;
         if (blockList == block)
             blockList = nil;
     };
+    [NSTimer scheduledTimerWithTimeInterval:2.0 repeats:NO block:timerActions];
+    SCNAnimationDidStopBlock animationActions = ^(SCNAnimation *animation, id<SCNAnimatable> receiver, BOOL completed) {
+        block->_node.geometry = nil;
+        [block->_node addParticleSystem:block->_explosion];
+    };
     SCNAnimation *animation = [block setupDestruction];
-    animation.animationDidStop = actions;
+    animation.animationDidStop = animationActions;
     [block->_node addAnimation:animation forKey:nil];
 }
 
@@ -102,7 +112,7 @@ static Block *blockList;
     _lit = lit;
 }
 
-- (void)setupGeometry
+- (SCNGeometry *)setupGeometry
 {
     NSArray<SCNMaterial *> *materials = [self unlitMaterials];
     _unlitMaterials = materials;
@@ -111,7 +121,7 @@ static Block *blockList;
         commonGeometry = [SCNBox boxWithWidth:1.0 height:1.0 length:1.0 chamferRadius:1.0 / 6.0];
     SCNGeometry *geometry = [commonGeometry copy];
     geometry.materials = materials;
-    _node.geometry = geometry;
+    return geometry;
 }
 
 - (NSArray<SCNMaterial *> *)unlitMaterials
@@ -221,6 +231,21 @@ property.minificationFilter = SCNFilterModeNearest;
     animation.duration = 1.0;
     animation.removedOnCompletion = YES;
     return [SCNAnimation animationWithCAAnimation:animation];
+}
+
+- (void)setupExplosion
+{
+    _explosion = [SCNParticleSystem particleSystem];
+    _explosion.emissionDuration = 0.2;
+    _explosion.birthRate = 50.0;
+    _explosion.birthDirection = SCNParticleBirthDirectionRandom;
+    _explosion.particleVelocity = 10.0;
+    _explosion.particleLifeSpan = 0.1;
+    _explosion.particleSize = 0.01;
+    _explosion.particleColor = _color;
+    _explosion.particleDiesOnCollision = YES;
+    _explosion.sortingMode = SCNParticleSortingModeProjectedDepth;
+    _explosion.local = YES;
 }
 
 @end
