@@ -12,6 +12,8 @@
 		A0247EEF22EB7033009C104C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A0247EEE22EB7033009C104C /* Assets.xcassets */; };
 		A0247EF522EB7033009C104C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247EF422EB7033009C104C /* main.m */; };
 		A0247F0322EC71A0009C104C /* Game.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247F0222EC71A0009C104C /* Game.m */; };
+		A07120EA22FA9C8600C248C9 /* ActionQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = A07120E922FA9C8600C248C9 /* ActionQueue.m */; };
+		A07120ED22FAEF8300C248C9 /* World.m in Sources */ = {isa = PBXBuildFile; fileRef = A07120EC22FAEF8300C248C9 /* World.m */; };
 		A08931D722F6C8AA0019BB0A /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A08931D622F6C8AA0019BB0A /* Default-568h@2x.png */; };
 		A09F4EAF22F1F46600A1D1AB /* Block.m in Sources */ = {isa = PBXBuildFile; fileRef = A09F4EAE22F1F46600A1D1AB /* Block.m */; };
 /* End PBXBuildFile section */
@@ -27,6 +29,10 @@
 		A0247EF422EB7033009C104C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		A0247F0122EC71A0009C104C /* Game.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Game.h; sourceTree = "<group>"; };
 		A0247F0222EC71A0009C104C /* Game.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Game.m; sourceTree = "<group>"; };
+		A07120E822FA9C8600C248C9 /* ActionQueue.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ActionQueue.h; sourceTree = "<group>"; };
+		A07120E922FA9C8600C248C9 /* ActionQueue.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ActionQueue.m; sourceTree = "<group>"; };
+		A07120EB22FAEF8300C248C9 /* World.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = World.h; sourceTree = "<group>"; };
+		A07120EC22FAEF8300C248C9 /* World.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = World.m; sourceTree = "<group>"; };
 		A08931D622F6C8AA0019BB0A /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		A09F4EAD22F1F46600A1D1AB /* Block.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Block.h; path = "Block Buster/Block.h"; sourceTree = SOURCE_ROOT; };
 		A09F4EAE22F1F46600A1D1AB /* Block.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = Block.m; path = "Block Buster/Block.m"; sourceTree = SOURCE_ROOT; };
@@ -63,10 +69,14 @@
 		A0247EE222EB7031009C104C /* Block Buster */ = {
 			isa = PBXGroup;
 			children = (
+				A07120E822FA9C8600C248C9 /* ActionQueue.h */,
+				A07120E922FA9C8600C248C9 /* ActionQueue.m */,
 				A09F4EAD22F1F46600A1D1AB /* Block.h */,
 				A09F4EAE22F1F46600A1D1AB /* Block.m */,
 				A0247F0122EC71A0009C104C /* Game.h */,
 				A0247F0222EC71A0009C104C /* Game.m */,
+				A07120EB22FAEF8300C248C9 /* World.h */,
+				A07120EC22FAEF8300C248C9 /* World.m */,
 				A0247EE322EB7031009C104C /* AppDelegate.h */,
 				A0247EE422EB7031009C104C /* AppDelegate.m */,
 				A0247EE822EB7031009C104C /* GameViewController.h */,
@@ -148,8 +158,10 @@
 			buildActionMask = 2147483647;
 			files = (
 				A0247F0322EC71A0009C104C /* Game.m in Sources */,
+				A07120ED22FAEF8300C248C9 /* World.m in Sources */,
 				A0247EEA22EB7031009C104C /* GameViewController.m in Sources */,
 				A0247EF522EB7033009C104C /* main.m in Sources */,
+				A07120EA22FA9C8600C248C9 /* ActionQueue.m in Sources */,
 				A09F4EAF22F1F46600A1D1AB /* Block.m in Sources */,
 				A0247EE522EB7031009C104C /* AppDelegate.m in Sources */,
 			);

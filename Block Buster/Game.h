@@ -12,7 +12,6 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface Game : NSObject
 
-- (instancetype)initWithView:(UIView *)view;
 + (instancetype)gameWithView:(UIView *) view;
 
 - (void)adjustCameraForSize:(CGSize) size;

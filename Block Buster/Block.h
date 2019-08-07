@@ -16,7 +16,7 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic) BOOL lit;
 @property (nonatomic, readonly) BOOL alive;
 
-+ (void)createBlockWithColor:(UIColor *) color inWorld:(SCNNode *)world atPosition:(simd_float3)position;
++ (instancetype)createBlockWithColor:(UIColor *) color inWorld:(SCNNode *)world atPosition:(simd_float3)position;
 + (void)dismissBlock:(Block *)block;
 + (Block *)blockForNode:(SCNNode *)node;
 

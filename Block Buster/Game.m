@@ -8,12 +8,13 @@
 
 @import GameplayKit;
 
-#import "Block.h"
 #import "Game.h"
+#import "World.h"
+#import "Block.h"
 
 #define COLORS @[[UIColor whiteColor], [UIColor redColor], [UIColor yellowColor], [UIColor greenColor], [UIColor cyanColor], [UIColor blueColor]]
 
-#define CAMERA_FOV 60.0
+#define CAMERA_FOV 30.0
 
 #define WORLD_SIZE 5.0
 
@@ -25,20 +26,17 @@
 
 @interface Game()
 
+- (instancetype)initWithView:(UIView *)view;
 - (void)createScene;
 - (void)startGame;
-- (void)spawnBlockWithColor:(UIColor *)color;
-- (NSArray<NSValue *> *)emptyNeighborsForPosition:(SCNVector3) position;
-- (BOOL)isValidEmptyBlockPosition:(SCNVector3) position;
 - (void)comboWithBlock:(Block *)block;
 - (void)comboTimeout:(NSTimer *)timer;
-- (void)updateWorldTransform;
 
 @end
 
 @implementation Game {
     SCNView *_view;
-    SCNNode *_worldNode, *_cameraNode;
+    SCNNode *_cameraNode;
     float _cameraDistance;
     NSMutableArray<Block *> *_comboBlocks;
     UIColor *_comboColor;
@@ -96,8 +94,7 @@
     float angle = multiplier * tan(CAMERA_FOV / 180.0 * M_PI / 2.0) * (_cameraDistance - 1.0) * 2.0;
     multiplier = 1.0 / multiplier;
     axis = simd_make_float3(axis[0] * multiplier, axis[1] * multiplier, axis[2] * multiplier);
-    simd_quatf rotation = simd_quaternion(angle, axis);
-    _worldNode.simdWorldOrientation = simd_normalize(simd_mul(rotation, _worldNode.simdWorldOrientation));
+    [World rotateAroundAxis:SCNVector3FromFloat3(axis) angle:angle];
 }
 
 - (void)tapWorldAtPoint:(CGPoint) point
@@ -122,10 +119,9 @@
     _cameraNode.camera = camera;
     _cameraNode.light = light;
     [self adjustCameraForSize:_view.bounds.size];
-    _worldNode = [SCNNode node];
     SCNScene *scene = [SCNScene scene];
     [scene.rootNode addChildNode:_cameraNode];
-    [scene.rootNode addChildNode:_worldNode];
+    [World createWorldInNode:scene.rootNode];
     _view.backgroundColor = [UIColor blackColor];
     _view.scene = scene;
 }
@@ -149,80 +145,7 @@
     [randomColors addObjectsFromArray:randomMandatory];
     [randomColors addObjectsFromArray:randomOptional];
     for (NSUInteger index = 0; index < MAX_BLOCKS_IN_WORLD; ++ index)
-        [self spawnBlockWithColor:randomColors[index]];
-}
-
-- (void)spawnBlockWithColor:(UIColor *)color
-{
-    GKRandomSource *randomSource = [GKRandomSource sharedRandom];
-    NSArray<SCNNode *> *blockNodes = [_worldNode childNodes];
-    NSUInteger blockCount = blockNodes.count;
-    SCNVector3 position = SCNVector3Make(0.0, 0.0, 0.0);
-    if (blockCount) {
-        BOOL foundSuitableNeighbor = NO;
-        NSArray<NSValue *> *emptyBlocks;;
-        while (!foundSuitableNeighbor) {
-            NSUInteger pick = [randomSource nextIntWithUpperBound:blockCount];
-            SCNNode *neighborBlock = blockNodes[pick];
-            Block *block = [Block blockForNode:neighborBlock];
-            if (!block.alive) continue;
-            emptyBlocks = [self emptyNeighborsForPosition:neighborBlock.position];
-            if (emptyBlocks.count)
-                foundSuitableNeighbor = YES;
-        }
-        NSUInteger pick = [randomSource nextIntWithUpperBound:emptyBlocks.count];
-        position = emptyBlocks[pick].SCNVector3Value;
-    }
-    NSNumber *number = _colorCounter[color];
-    NSUInteger counter = 0;
-    if (number)
-        counter = [number unsignedIntegerValue];
-    ++ counter;
-    _colorCounter[color] = @(counter);
-    [Block createBlockWithColor:color inWorld:_worldNode atPosition:SCNVector3ToFloat3(position)];
-    [self updateWorldTransform];
-}
-
-- (NSArray<NSValue *> *)emptyNeighborsForPosition:(SCNVector3) position
-{
-    NSMutableArray *positions = [NSMutableArray arrayWithCapacity:6];
-    SCNVector3 test;
-    test = SCNVector3Make(position.x + 1.0, position.y, position.z);
-    if ([self isValidEmptyBlockPosition:test])
-        [positions addObject:[NSValue valueWithSCNVector3:test]];
-        test = SCNVector3Make(position.x, position.y + 1.0, position.z);
-    if ([self isValidEmptyBlockPosition:test])
-        [positions addObject:[NSValue valueWithSCNVector3:test]];
-    test = SCNVector3Make(position.x, position.y, position.z + 1.0);
-    if ([self isValidEmptyBlockPosition:test])
-        [positions addObject:[NSValue valueWithSCNVector3:test]];
-    test = SCNVector3Make(position.x - 1.0, position.y, position.z);
-    if ([self isValidEmptyBlockPosition:test])
-        [positions addObject:[NSValue valueWithSCNVector3:test]];
-    test = SCNVector3Make(position.x, position.y - 1.0, position.z);
-    if ([self isValidEmptyBlockPosition:test])
-        [positions addObject:[NSValue valueWithSCNVector3:test]];
-    test = SCNVector3Make(position.x, position.y, position.z - 1.0);
-    if ([self isValidEmptyBlockPosition:test])
-        [positions addObject:[NSValue valueWithSCNVector3:test]];
-    return positions;
-}
-
-- (BOOL)isValidEmptyBlockPosition:(SCNVector3) position
-{
-    SCNVector3 min, max;
-    [_worldNode getBoundingBoxMin:&min max:&max];
-    if (position.x > min.x + WORLD_SIZE) return NO;
-    if (position.y > min.y + WORLD_SIZE) return NO;
-    if (position.z > min.z + WORLD_SIZE) return NO;
-    if (position.x <  max.x - WORLD_SIZE) return NO;
-    if (position.y < max.y - WORLD_SIZE) return NO;
-    if (position.z < max.z - WORLD_SIZE) return NO;
-    NSArray <SCNNode *> *result = [_worldNode childNodes];
-    for (SCNNode *node in result)
-        if (SCNVector3EqualToVector3(position, node.position))
-            return NO;
-    return YES;
+        [World addBlockWithColor:randomColors[index]];
 }
 
 - (void)comboWithBlock:(Block *)block
@@ -267,24 +190,13 @@
         counter -= _comboBlocks.count;
         _colorCounter[_comboColor] = @(counter);
         for (Block *block in _comboBlocks)
-            [Block dismissBlock:block];
+            [World removeBlock:block];
         [_comboBlocks removeAllObjects];
         if (counter == 1)
-            [self spawnBlockWithColor:_comboColor];
-        [self updateWorldTransform];
+            [World addBlockWithColor:_comboColor];
     }
     _comboColor = [UIColor blackColor];
     _view.backgroundColor = _comboColor;
-}
-
-- (void)updateWorldTransform
-{
-    CGFloat radius;
-    SCNVector3 center;
-    [_worldNode getBoundingSphereCenter:&center radius:&radius];
-    CGFloat scale = 1.0 / radius;
-    _worldNode.scale = SCNVector3Make(scale, scale, scale);
-    _worldNode.pivot = SCNMatrix4MakeTranslation(center.x, center.y, center.z);
 }
 
 @end
