@@ -17,6 +17,7 @@ NS_ASSUME_NONNULL_BEGIN
 + (void)addBlockWithColor:(UIColor *)color;
 + (void)removeBlock:(Block *)block;
 + (void)rotateAroundAxis:(SCNVector3)axis angle:(float)angle;
++ (void)gatherUp;
 
 @end
 

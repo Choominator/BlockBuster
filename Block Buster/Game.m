@@ -11,6 +11,7 @@
 #import "Game.h"
 #import "World.h"
 #import "Block.h"
+#import "ActionQueue.h"
 
 #define COLORS @[[UIColor whiteColor], [UIColor redColor], [UIColor yellowColor], [UIColor greenColor], [UIColor cyanColor], [UIColor blueColor]]
 
@@ -146,6 +147,7 @@
     [randomColors addObjectsFromArray:randomOptional];
     for (NSUInteger index = 0; index < MAX_BLOCKS_IN_WORLD; ++ index)
         [World addBlockWithColor:randomColors[index]];
+    [World gatherUp];
 }
 
 - (void)comboWithBlock:(Block *)block
@@ -194,6 +196,10 @@
         [_comboBlocks removeAllObjects];
         if (counter == 1)
             [World addBlockWithColor:_comboColor];
+        void (^action)(void) = ^{
+            [World gatherUp];
+        };
+        [ActionQueue enqueueAction:action];
     }
     _comboColor = [UIColor blackColor];
     _view.backgroundColor = _comboColor;

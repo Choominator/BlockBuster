@@ -15,10 +15,12 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) UIColor *color;
 @property (nonatomic) BOOL lit;
 @property (nonatomic, readonly) BOOL alive;
+@property (nonatomic) simd_float3 position;
 
 + (instancetype)createBlockWithColor:(UIColor *) color inWorld:(SCNNode *)world atPosition:(simd_float3)position;
 + (void)dismissBlock:(Block *)block;
 + (Block *)blockForNode:(SCNNode *)node;
++ (NSArray<Block *> *)allBlocks;
 
 @end
 

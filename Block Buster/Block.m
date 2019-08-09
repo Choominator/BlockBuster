@@ -15,7 +15,7 @@ static NSMutableDictionary<UIColor *, NSArray<SCNMaterial *> *> *unlitMaterials;
 static NSMutableDictionary<UIColor *, NSArray<SCNMaterial *> *> *litMaterials;
 static NSMutableDictionary<UIColor *, UIImage *> *emissionImages;
 static NSMutableDictionary<UIColor *, UIImage *> *diffuseImages;
-static Block *blockList;
+static NSMutableSet<Block *> *blockSet;
 
 @interface Block()
 
@@ -28,15 +28,12 @@ static Block *blockList;
 - (UIImage *)emissionImage;
 - (SCNAnimation *)setupCreation;
 - (SCNAnimation *)setupDestruction;
-- (void)setupExplosion;
 
 @end
 
 @implementation Block {
     NSArray<SCNMaterial *> *_litMaterials, *_unlitMaterials;
     SCNNode *_node;
-    Block *_next, __weak *_prev;
-    SCNParticleSystem *_explosion;
 }
 
 - (instancetype)initWithColor:(UIColor *) color inWorld:(SCNNode *)world atPosition:(simd_float3)position
@@ -44,6 +41,7 @@ static Block *blockList;
     self = [super init];
     if (!self) return nil;
     _color = color;
+    _position = position;
     _node = [SCNNode node];
     _node.geometry = [self setupGeometry];
     _node.simdPosition = position;
@@ -54,56 +52,36 @@ static Block *blockList;
 + (instancetype)createBlockWithColor:(UIColor *) color inWorld:(SCNNode *)world atPosition:(simd_float3)position
 {
     Block *block = [[Block alloc] initWithColor:color inWorld:world atPosition:position];
-    void (^action)(void) =^{
-        [world addChildNode:block->_node];
-        SCNAnimation *animation = [block setupCreation];
-        [block->_node addAnimation:animation forKey:nil];
-        [block setupExplosion];
-        if (!blockList) {
-            blockList = block;
-            block->_next = block;
-            block->_prev = block;
-        } else {
-            block->_next = blockList;
-            block->_prev = blockList->_prev;
-            block->_prev->_next = block;
-            block->_next->_prev = block;
-        }
-        block->_alive = YES;
-    };
-    [ActionQueue enqueueAction:action];
+    if (!blockSet)
+        blockSet = [NSMutableSet new];
+    [blockSet addObject:block];
+    [world addChildNode:block->_node];
+    SCNAnimation *animation = [block setupCreation];
+    [block->_node addAnimation:animation forKey:nil];
+    block->_alive = YES;
     return block;
 }
 
 + (void)dismissBlock:(Block *)block
 {
     block->_alive = NO;
-    void (^action)(void) = ^{
-        SCNAnimationDidStopBlock animationActions = ^(SCNAnimation *animation, id<SCNAnimatable> receiver, BOOL completed) {
-            block->_node.geometry = nil;
-            [block->_node addParticleSystem:block->_explosion];
-        };
-        SCNAnimation *animation = [block setupDestruction];
-        animation.animationDidStop = animationActions;
-        [block->_node addAnimation:animation forKey:nil];
+    SCNAnimationDidStopBlock animationActions = ^(SCNAnimation *animation, id<SCNAnimatable> receiver, BOOL completed) {
+        block->_node.geometry = nil;
+        [blockSet removeObject:block];
     };
-    [ActionQueue enqueueAction:action];
-    action = ^{
-        if (blockList == block)
-            blockList = block->_next;
-        block->_prev->_next = block->_next;
-        block->_next->_prev = block->_prev;
-        block->_prev = nil;
-        block->_next = nil;
-        if (blockList == block)
-            blockList = nil;
-    };
-    [ActionQueue enqueueAction:action];
+    SCNAnimation *animation = [block setupDestruction];
+    animation.animationDidStop = animationActions;
+    [block->_node addAnimation:animation forKey:nil];
 }
 
 + (Block *)blockForNode:(SCNNode *)node
 {
     return objc_getAssociatedObject(node, (__bridge void *) node);
+}
+
++ (NSArray<Block *> *)allBlocks;
+{
+    return [blockSet allObjects];
 }
 
 - (void)dealloc
@@ -118,6 +96,15 @@ static Block *blockList;
     else
         _node.geometry.materials = _unlitMaterials;
     _lit = lit;
+}
+
+- (void)setPosition:(simd_float3)position
+{
+    _position = position;
+    [SCNTransaction begin];
+    [SCNTransaction setAnimationDuration:0.5];
+    self->_node.simdPosition = position;
+    [SCNTransaction commit];
 }
 
 - (SCNGeometry *)setupGeometry
@@ -239,20 +226,6 @@ property.minificationFilter = SCNFilterModeNearest;
     animation.removedOnCompletion = YES;
     animation.usesSceneTimeBase = NO;
     return [SCNAnimation animationWithCAAnimation:animation];
-}
-
-- (void)setupExplosion
-{
-    _explosion = [SCNParticleSystem particleSystem];
-    _explosion.emissionDuration = 0.2;
-    _explosion.birthRate = 50.0;
-    _explosion.birthDirection = SCNParticleBirthDirectionRandom;
-    _explosion.particleVelocity = 10.0;
-    _explosion.particleLifeSpan = 0.05;
-    _explosion.particleSize = 0.01;
-    _explosion.particleColor = _color;
-    _explosion.particleDiesOnCollision = YES;
-    _explosion.local = YES;
 }
 
 @end
