@@ -12,7 +12,9 @@
 #import "Block.h"
 #import "ActionQueue.h"
 
-static Block __weak *worldBlocks[4][4][4];
+#define WORLD_SIZE 3
+
+static Block __weak *worldBlocks[WORLD_SIZE][WORLD_SIZE][WORLD_SIZE];
 static SCNNode *worldNode;
 static SCNVector3 worldMin, worldMax;
 
@@ -38,12 +40,12 @@ static SCNVector3 worldMin, worldMax;
 
 + (void)addBlockWithColor:(UIColor *)color
 {
-    NSMutableArray<NSValue *> *availablePositions = [NSMutableArray arrayWithCapacity:64];
-    for (NSUInteger x = 0; x < 4; ++ x) {
-        for (NSUInteger y = 0; y < 4; ++ y) {
-            for (NSUInteger z = 0; z < 4; ++ z) {
+    NSMutableArray<NSValue *> *availablePositions = [NSMutableArray arrayWithCapacity:WORLD_SIZE * WORLD_SIZE * WORLD_SIZE];
+    for (NSUInteger x = 0; x < WORLD_SIZE; ++ x) {
+        for (NSUInteger y = 0; y < WORLD_SIZE; ++ y) {
+            for (NSUInteger z = 0; z < WORLD_SIZE; ++ z) {
                 if (!worldBlocks[x][y][z]) {
-                    NSValue *value = [NSValue valueWithSCNVector3:SCNVector3Make(x - 1.5, y - 1.5, z - 1.5)];
+                    NSValue *value = [NSValue valueWithSCNVector3:SCNVector3Make(x - WORLD_SIZE / 2.0 + 0.5, y - WORLD_SIZE/ 2.0 + 0.5, z - WORLD_SIZE / 2.0 + 0.5)];
                     [availablePositions addObject:value];
                 }
             }
@@ -122,7 +124,7 @@ static SCNVector3 worldMin, worldMax;
 
 + (Block *)randomCentralBlockFromBlocks:(NSArray<Block *> *)blocks
 {
-    NSMutableArray<Block *> *closestBlocks = [NSMutableArray arrayWithCapacity:64];
+    NSMutableArray<Block *> *closestBlocks = [NSMutableArray arrayWithCapacity:WORLD_SIZE * WORLD_SIZE * WORLD_SIZE];
     float shortestDistanceSquared = +INFINITY;
     for (Block *block in blocks) {
         float distanceSquared = simd_length_squared(block.position);
@@ -150,10 +152,10 @@ static SCNVector3 worldMin, worldMax;
 
 + (void)blocksConnectedToPosition:(simd_float3)position notInSet:(NSMutableSet<Block *> *)set
 {
-    NSUInteger x = position[0] + 1.5;
-    NSUInteger y = position[1] + 1.5;
-    NSUInteger z = position[2] + 1.5;
-    if (x > 3 || x < 0 || y > 3 || y < 0 || z > 3 || z < 0) return;
+    NSUInteger x = position[0] + WORLD_SIZE / 2.0 - 0.5;
+    NSUInteger y = position[1] + WORLD_SIZE / 2.0 - 0.5;
+    NSUInteger z = position[2] + WORLD_SIZE / 2.0 - 0.5;
+    if (x > WORLD_SIZE - 1 || x < 0 || y > WORLD_SIZE - 1 || y < 0 || z > WORLD_SIZE - 1 || z < 0) return;
     if (!worldBlocks[x][y][z]) return;
     Block *block = worldBlocks[x][y][z];
     if ([set containsObject:block]) return;
@@ -229,14 +231,14 @@ static SCNVector3 worldMin, worldMax;
 {
     simd_float3 oldPosition = block.position;
     if (simd_equal(oldPosition, newPosition)) return;
-    NSUInteger oldX = oldPosition[0] + 1.5;
-    NSUInteger oldY = oldPosition[1] + 1.5;
-    NSUInteger oldZ = oldPosition[2] + 1.5;
+    NSUInteger oldX = oldPosition[0] + WORLD_SIZE / 2.0 - 0.5;
+    NSUInteger oldY = oldPosition[1] + WORLD_SIZE / 2.0 - 0.5;
+    NSUInteger oldZ = oldPosition[2] + WORLD_SIZE / 2.0 - 0.5;
     assert(worldBlocks[oldX][oldY][oldZ]);
     assert(worldBlocks[oldX][oldY][oldZ] == block);
-    NSUInteger newX = newPosition[0] + 1.5;
-    NSUInteger newY = newPosition[1] + 1.5;
-    NSUInteger newZ = newPosition[2] + 1.5;
+    NSUInteger newX = newPosition[0] + WORLD_SIZE / 2.0 - 0.5;
+    NSUInteger newY = newPosition[1] + WORLD_SIZE / 2.0 - 0.5;
+    NSUInteger newZ = newPosition[2] + WORLD_SIZE / 2.0 - 0.5;
     assert(!worldBlocks[newX][newY][newZ]);
     worldBlocks[newX][newY][newZ] = block;
     worldBlocks[oldX][oldY][oldZ] = nil;

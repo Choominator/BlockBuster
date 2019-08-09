@@ -13,15 +13,13 @@
 #import "Block.h"
 #import "ActionQueue.h"
 
-#define COLORS @[[UIColor whiteColor], [UIColor redColor], [UIColor yellowColor], [UIColor greenColor], [UIColor cyanColor], [UIColor blueColor]]
+#define COLORS @[[UIColor redColor], [UIColor yellowColor], [UIColor greenColor], [UIColor cyanColor], [UIColor blueColor]]
 
 #define CAMERA_FOV 30.0
 
-#define WORLD_SIZE 5.0
-
 #define MAX_COLORS_IN_WORLD 3
 #define MAX_COMBO 5
-#define MAX_BLOCKS_IN_WORLD 12
+#define MAX_BLOCKS_IN_WORLD 9
 
 #define LEVEL_DURATION 30
 
@@ -41,7 +39,7 @@
     float _cameraDistance;
     NSMutableArray<Block *> *_comboBlocks;
     UIColor *_comboColor;
-    NSMutableDictionary<UIColor *, NSNumber *> *_colorCounter;
+    NSCountedSet<UIColor *> *_colorCounter;
     NSTimer __weak *_comboTimer;
 }
 
@@ -52,8 +50,8 @@
     assert([view isKindOfClass:[SCNView class]]);
     _view =(SCNView *) view;
     _comboBlocks = [NSMutableArray arrayWithCapacity:MAX_COMBO];
-    _colorCounter = [NSMutableDictionary new];
-    _comboColor = [UIColor blackColor];
+    _colorCounter = [[NSCountedSet alloc] initWithCapacity:MAX_COLORS_IN_WORLD];
+    _comboColor = [UIColor whiteColor];
     _comboTimer = nil;
     [self createScene];
     [self startGame];
@@ -92,7 +90,7 @@
         inverseLength = 1.0 / size.width;
     simd_float3 axis = simd_make_float3(delta.y * inverseLength, delta.x * inverseLength, 0.0);
     float multiplier = simd_length(axis);
-    float angle = multiplier * tan(CAMERA_FOV / 180.0 * M_PI / 2.0) * (_cameraDistance - 1.0) * 2.0;
+    float angle = multiplier * tan(CAMERA_FOV / 180.0 * M_PI / 2.0) * (_cameraDistance - 1.0) * 4.0;
     multiplier = 1.0 / multiplier;
     axis = simd_make_float3(axis[0] * multiplier, axis[1] * multiplier, axis[2] * multiplier);
     [World rotateAroundAxis:SCNVector3FromFloat3(axis) angle:angle];
@@ -123,7 +121,7 @@
     SCNScene *scene = [SCNScene scene];
     [scene.rootNode addChildNode:_cameraNode];
     [World createWorldInNode:scene.rootNode];
-    _view.backgroundColor = [UIColor blackColor];
+    _view.backgroundColor = [UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0];
     _view.scene = scene;
 }
 
@@ -145,8 +143,10 @@
     NSMutableArray<UIColor *> *randomColors = [NSMutableArray arrayWithCapacity:MAX_COLORS_IN_WORLD * 2 + (MAX_COMBO - 2) * MAX_COLORS_IN_WORLD];
     [randomColors addObjectsFromArray:randomMandatory];
     [randomColors addObjectsFromArray:randomOptional];
-    for (NSUInteger index = 0; index < MAX_BLOCKS_IN_WORLD; ++ index)
+                      for (NSUInteger index = 0; index < MAX_BLOCKS_IN_WORLD; ++ index) {
         [World addBlockWithColor:randomColors[index]];
+                          [_colorCounter addObject:randomColors[index]];
+                      }
     [World gatherUp];
 }
 
@@ -167,15 +167,15 @@
             comboBlock.lit = NO;
         [_comboBlocks removeAllObjects];
         [_comboTimer invalidate];
-        _comboColor = [UIColor blackColor];
-        _view.backgroundColor = _comboColor;
+        _comboColor = [UIColor whiteColor];
+        _view.backgroundColor = [UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0];
         return;
     }
     [_comboBlocks addObject:block];
     _comboColor = block.color;
     CGFloat red, green, blue;
     [_comboColor getRed:&red green:&green blue:&blue alpha:NULL];
-    _view.backgroundColor = [UIColor colorWithRed:red * 0.3 green:green * 0.3 blue:blue * 0.3 alpha:1.0];
+    _view.backgroundColor = [UIColor colorWithRed:red * 0.5 green:green * 0.5 blue:blue * 0.5 alpha:1.0];
     block.lit = YES;
     if (!_comboTimer)
         _comboTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(comboTimeout:) userInfo:nil repeats:NO];
@@ -187,22 +187,23 @@
         _comboBlocks[0].lit = NO;
         [_comboBlocks removeAllObjects];
     } else if (_comboBlocks.count > 1) {
-        NSNumber *number = _colorCounter[_comboColor];
-        NSUInteger counter = [number unsignedIntegerValue];
-        counter -= _comboBlocks.count;
-        _colorCounter[_comboColor] = @(counter);
-        for (Block *block in _comboBlocks)
+        for (Block *block in _comboBlocks) {
             [World removeBlock:block];
+            [_colorCounter removeObject:_comboColor];
+        }
         [_comboBlocks removeAllObjects];
-        if (counter == 1)
+        NSUInteger counter = [_colorCounter countForObject:_comboColor];
+        if (counter == 1) {
             [World addBlockWithColor:_comboColor];
+            [_colorCounter addObject:_comboColor];
+        }
         void (^action)(void) = ^{
             [World gatherUp];
         };
         [ActionQueue enqueueAction:action];
     }
-    _comboColor = [UIColor blackColor];
-    _view.backgroundColor = _comboColor;
+    _comboColor = [UIColor whiteColor];
+    _view.backgroundColor = [UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0];
 }
 
 @end
