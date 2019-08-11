@@ -13,10 +13,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 @interface World : NSObject
 
-+ (void)createWorldInNode:(SCNNode *)node;
++ (void)worldInNode:(SCNNode *)node;
 + (void)addBlockWithColor:(UIColor *)color;
 + (void)removeBlock:(Block *)block;
-+ (void)rotateAroundAxis:(SCNVector3)axis angle:(float)angle;
 + (void)gatherUp;
 
 @end

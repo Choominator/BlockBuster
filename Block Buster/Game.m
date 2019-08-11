@@ -12,21 +12,19 @@
 #import "World.h"
 #import "Block.h"
 #import "ActionQueue.h"
+#import "GameDelegate.h"
 
 #define COLORS @[[UIColor redColor], [UIColor yellowColor], [UIColor greenColor], [UIColor cyanColor], [UIColor blueColor]]
-
-#define CAMERA_FOV 30.0
 
 #define MAX_COLORS_IN_WORLD 3
 #define MAX_COMBO 5
 #define MAX_BLOCKS_IN_WORLD 9
 
-#define LEVEL_DURATION 30
+#define LEVEL_DURATION 10
 
 @interface Game()
 
-- (instancetype)initWithView:(UIView *)view;
-- (void)createScene;
+- (instancetype)initWithWorldNode:(SCNNode *)node;
 - (void)startGame;
 - (void)comboWithBlock:(Block *)block;
 - (void)comboTimeout:(NSTimer *)timer;
@@ -34,7 +32,6 @@
 @end
 
 @implementation Game {
-    SCNView *_view;
     SCNNode *_cameraNode;
     float _cameraDistance;
     NSMutableArray<Block *> *_comboBlocks;
@@ -43,86 +40,29 @@
     NSTimer __weak *_comboTimer;
 }
 
-- (instancetype)initWithView:(UIView *)view
+- (instancetype)initWithWorldNode:(SCNNode *)node
 {
     self =  [super init];
     if (!self) return nil;
-    assert([view isKindOfClass:[SCNView class]]);
-    _view =(SCNView *) view;
     _comboBlocks = [NSMutableArray arrayWithCapacity:MAX_COMBO];
     _colorCounter = [[NSCountedSet alloc] initWithCapacity:MAX_COLORS_IN_WORLD];
     _comboColor = [UIColor whiteColor];
     _comboTimer = nil;
-    [self createScene];
+    [World worldInNode:node];
     [self startGame];
     return self;
 }
 
-+ (instancetype)gameWithView:(UIView *) view
++ (instancetype)gameWithWorldNode:(SCNNode *)node
 {
-    return [[Game alloc] initWithView:view];
+    return [[Game alloc] initWithWorldNode:node];
 }
 
-- (void)adjustCameraForSize:(CGSize) size
+- (void)tapNode:(SCNNode *)node
 {
-    float aspectRatio;
-    if (size.width > size.height) {
-        _cameraNode.camera.projectionDirection = SCNCameraProjectionDirectionHorizontal;
-        aspectRatio = size.height / size.width;
-    } else {
-        _cameraNode.camera.projectionDirection = SCNCameraProjectionDirectionVertical;
-        aspectRatio = size.width / size.height;
-    }
-    float angle = atan(aspectRatio * tan(CAMERA_FOV / 180.0 * M_PI / 2.0));
-    _cameraDistance = 1.0 / sin(angle);
-    _cameraNode.position = SCNVector3Make(0.0, 0.0, _cameraDistance);
-}
-
-- (void)rotateWorldByDelta:(CGPoint) delta
-{
-    if (CGPointEqualToPoint(delta, CGPointZero))
-        return;
-    float inverseLength;
-    CGSize size = _view.bounds.size;
-    if (size.height > size.width)
-        inverseLength = 1.0 / size.height;
-    else
-        inverseLength = 1.0 / size.width;
-    simd_float3 axis = simd_make_float3(delta.y * inverseLength, delta.x * inverseLength, 0.0);
-    float multiplier = simd_length(axis);
-    float angle = multiplier * tan(CAMERA_FOV / 180.0 * M_PI / 2.0) * (_cameraDistance - 1.0) * 4.0;
-    multiplier = 1.0 / multiplier;
-    axis = simd_make_float3(axis[0] * multiplier, axis[1] * multiplier, axis[2] * multiplier);
-    [World rotateAroundAxis:SCNVector3FromFloat3(axis) angle:angle];
-}
-
-- (void)tapWorldAtPoint:(CGPoint) point
-{
-    NSArray<SCNHitTestResult *> *results = [_view hitTest:point options:@{SCNHitTestBoundingBoxOnlyKey: @(YES), SCNHitTestOptionFirstFoundOnly: @(YES)}];
-    if (!results.count) return;
-    for (SCNHitTestResult *result in results) {
-        Block *block = [Block blockForNode:result.node];
-        if (!block || !block.alive) return;;
-            [self comboWithBlock:block];
-    }
-}
-
-- (void)createScene
-{
-    SCNCamera *camera = [SCNCamera camera];
-    camera.fieldOfView = CAMERA_FOV;
-    SCNLight *light = [SCNLight light];
-    light.type = SCNLightTypeOmni;
-    light.color = [UIColor whiteColor];
-    _cameraNode = [SCNNode node];
-    _cameraNode.camera = camera;
-    _cameraNode.light = light;
-    [self adjustCameraForSize:_view.bounds.size];
-    SCNScene *scene = [SCNScene scene];
-    [scene.rootNode addChildNode:_cameraNode];
-    [World createWorldInNode:scene.rootNode];
-    _view.backgroundColor = [UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0];
-    _view.scene = scene;
+    Block *block = [Block blockForNode:node];
+    if (!block.alive) return;
+    [self comboWithBlock:block];
 }
 
 - (void)startGame
@@ -168,14 +108,12 @@
         [_comboBlocks removeAllObjects];
         [_comboTimer invalidate];
         _comboColor = [UIColor whiteColor];
-        _view.backgroundColor = [UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0];
+        _delegate.comboColor = [UIColor whiteColor];
         return;
     }
     [_comboBlocks addObject:block];
     _comboColor = block.color;
-    CGFloat red, green, blue;
-    [_comboColor getRed:&red green:&green blue:&blue alpha:NULL];
-    _view.backgroundColor = [UIColor colorWithRed:red * 0.5 green:green * 0.5 blue:blue * 0.5 alpha:1.0];
+    _delegate.comboColor = _comboColor;
     block.lit = YES;
     if (!_comboTimer)
         _comboTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(comboTimeout:) userInfo:nil repeats:NO];
@@ -203,7 +141,7 @@
         [ActionQueue enqueueAction:action];
     }
     _comboColor = [UIColor whiteColor];
-    _view.backgroundColor = [UIColor colorWithRed:0.5 green:0.5 blue:0.5 alpha:1.0];
+    _delegate.comboColor = [UIColor whiteColor];
 }
 
 @end

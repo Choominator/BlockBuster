@@ -32,10 +32,9 @@ static SCNVector3 worldMin, worldMax;
 
 @implementation World
 
-+ (void)createWorldInNode:(SCNNode *)node
++ (void)worldInNode:(SCNNode *)node
 {
-    worldNode = [SCNNode node];
-    [node addChildNode:worldNode];
+    worldNode = node;
 }
 
 + (void)addBlockWithColor:(UIColor *)color
@@ -63,16 +62,6 @@ static SCNVector3 worldMin, worldMax;
 + (void)removeBlock:(Block *)block
 {
     [Block dismissBlock:block];
-}
-
-+ (void)rotateAroundAxis:(SCNVector3)axis angle:(float)angle
-{
-    simd_float3 simdAxis = simd_make_float3(axis.x, axis.y, axis.z);
-    simd_quatf simdRotation = simd_quaternion(angle, simdAxis);
-    simd_quatf simdOrientation = worldNode.simdWorldOrientation;
-    simdOrientation = simd_mul(simdRotation, simdOrientation);
-    simdOrientation = simd_normalize(simdOrientation);
-    worldNode.simdWorldOrientation = simdOrientation;
 }
 
 + (void)updateTransform

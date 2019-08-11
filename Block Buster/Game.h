@@ -8,15 +8,16 @@
 
 @import SceneKit;
 
+#import "GameDelegate.h"
+
 NS_ASSUME_NONNULL_BEGIN
 
 @interface Game : NSObject
 
-+ (instancetype)gameWithView:(UIView *) view;
+@property (weak, nonatomic) id<GameDelegate> delegate;
 
-- (void)adjustCameraForSize:(CGSize) size;
-- (void)rotateWorldByDelta:(CGPoint)delta;
-- (void)tapWorldAtPoint:(CGPoint) point;
++ (instancetype)gameWithWorldNode:(SCNNode *)node;
+- (void)tapNode:(SCNNode *)node;
 
 @end
 

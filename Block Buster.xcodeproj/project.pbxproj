@@ -36,6 +36,7 @@
 		A08931D622F6C8AA0019BB0A /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		A09F4EAD22F1F46600A1D1AB /* Block.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Block.h; path = "Block Buster/Block.h"; sourceTree = SOURCE_ROOT; };
 		A09F4EAE22F1F46600A1D1AB /* Block.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = Block.m; path = "Block Buster/Block.m"; sourceTree = SOURCE_ROOT; };
+		A0C7DE6022FF8B72009C201C /* GameDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GameDelegate.h; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -69,6 +70,7 @@
 		A0247EE222EB7031009C104C /* Block Buster */ = {
 			isa = PBXGroup;
 			children = (
+				A0C7DE6022FF8B72009C201C /* GameDelegate.h */,
 				A07120E822FA9C8600C248C9 /* ActionQueue.h */,
 				A07120E922FA9C8600C248C9 /* ActionQueue.m */,
 				A09F4EAD22F1F46600A1D1AB /* Block.h */,
