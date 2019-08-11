@@ -14,6 +14,7 @@
 
 @property (weak, nonatomic) UIColor *comboColor;
 
+- (void)displayFadingString:(NSString *)string;
 - (void)displayScoreIncrement:(NSUInteger)increment;
 
 @end

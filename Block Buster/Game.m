@@ -103,6 +103,7 @@
     UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, colorString);
     if (block.lit) return;
     if (block.color != _comboColor && _comboBlocks.count) {
+        [_delegate displayFadingString:@"✖️"];
         for (Block *comboBlock in _comboBlocks)
             comboBlock.lit = NO;
         [_comboBlocks removeAllObjects];
@@ -125,6 +126,7 @@
         _comboBlocks[0].lit = NO;
         [_comboBlocks removeAllObjects];
     } else if (_comboBlocks.count > 1) {
+        [_delegate displayScoreIncrement:1 << (_comboBlocks.count - 2)];
         for (Block *block in _comboBlocks) {
             [World removeBlock:block];
             [_colorCounter removeObject:_comboColor];

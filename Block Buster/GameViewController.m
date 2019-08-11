@@ -28,9 +28,9 @@
     SCNNode *_cameraNode, *_worldNode;
     float _cameraDistance;
     Game *_game;
-    SKLabelNode *_playLabel, *_scoreIncrementLabel;
+    SKLabelNode *_playLabel, *_fadingLabel;
     CGPoint _panLastTranslation;
-    SKAction *_scoreIncrementAction;
+    SKAction *_fadingAction;
     id<SCNSceneRenderer> _renderer;
 }
 
@@ -62,6 +62,7 @@
     _renderer = (SCNView *) self.view;
     _renderer.scene = [self setupScene];
     _renderer.overlaySKScene = [self setupOverlay];
+    self.comboColor = [UIColor whiteColor];
     [self updateToSize:self.view.bounds.size];
     _game = [Game gameWithWorldNode:_worldNode];
     _game.delegate = self;
@@ -148,7 +149,6 @@
     SCNScene *scene = [SCNScene scene];
     [scene.rootNode addChildNode:_cameraNode];
     [scene.rootNode addChildNode:_worldNode];
-    self.comboColor = [UIColor whiteColor];
     return scene;
 }
 
@@ -166,37 +166,42 @@
     _playLabel.verticalAlignmentMode = SKLabelVerticalAlignmentModeCenter;
     _playLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeCenter;
     _playLabel.hidden = YES;
-    _scoreIncrementLabel = [SKLabelNode labelNodeWithText:@"0"];
-    _scoreIncrementLabel.fontColor = [UIColor whiteColor];
-    _scoreIncrementLabel.fontSize = self.view.bounds.size.width * 0.6;
-    _scoreIncrementLabel.verticalAlignmentMode = SKLabelVerticalAlignmentModeCenter;
-    _scoreIncrementLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeCenter;
-    _scoreIncrementLabel.hidden = YES;
-    [_scoreIncrementLabel setScale:0.0];
+    _fadingLabel = [SKLabelNode labelNodeWithText:@"0"];
+    _fadingLabel.fontColor = [UIColor whiteColor];
+    _fadingLabel.fontSize = self.view.bounds.size.width * 0.6;
+    _fadingLabel.verticalAlignmentMode = SKLabelVerticalAlignmentModeCenter;
+    _fadingLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeCenter;
+    _fadingLabel.hidden = YES;
+    [_fadingLabel setScale:0.0];
     SKScene *scene = [SKScene sceneWithSize:size];
     scene.anchorPoint = CGPointMake(0.5, 0.5);
     scene.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.0];
     [scene addChild:circle];
     [scene addChild:_playLabel];
-    [scene addChild:_scoreIncrementLabel];
-    SKAction *fadeInAction = [SKAction fadeInWithDuration:0.5];
-    SKAction *fadeOutAction = [SKAction fadeOutWithDuration:0.5];
+    [scene addChild:_fadingLabel];
+    SKAction *fadeInAction = [SKAction fadeInWithDuration:1.0];
+    SKAction *fadeOutAction = [SKAction fadeOutWithDuration:1.0];
     SKAction *fadeAction = [SKAction sequence:@[fadeInAction, fadeOutAction]];
-    SKAction *growAction = [SKAction scaleTo:1.0 duration:1.0];
-    _scoreIncrementAction = [SKAction group:@[fadeAction, growAction]];
+    SKAction *growAction = [SKAction scaleTo:1.0 duration:2.0];
+    _fadingAction = [SKAction group:@[fadeAction, growAction]];
     return scene;
+}
+
+- (void)displayFadingString:(NSString *)string
+{
+    _fadingLabel.text = string;
+    _fadingLabel.hidden = NO;
+    void (^actions)(void) = ^{
+        [self->_fadingLabel setScale:0.0];
+        self->_fadingLabel.hidden = YES;
+    };
+    [_fadingLabel runAction:_fadingAction completion:actions];
 }
 
 - (void)displayScoreIncrement:(NSUInteger)increment
 {
-    NSString *scoreString = [[NSString alloc] initWithFormat: @"%lu", (unsigned long) increment];
-    _scoreIncrementLabel.text = scoreString;
-    void (^actions)(void) = ^{
-        [self->_scoreIncrementLabel setScale:0.0];
-        self->_scoreIncrementLabel.hidden = YES;
-    };
-    _scoreIncrementLabel.hidden = NO;
-    [_scoreIncrementLabel runAction:_scoreIncrementAction completion:actions];
+    NSString *string = [[NSString alloc] initWithFormat: @"%lu", (unsigned long) increment];
+    [self displayFadingString:string];
 }
 
 - (void)setComboColor:(UIColor *)comboColor
@@ -204,7 +209,11 @@
     CGFloat red, green, blue;
     assert([comboColor getRed:&red green:&green blue:&blue alpha:NULL]);
     UIColor *dimmedColor = [UIColor colorWithRed:red * 0.4 green:green * 0.4 blue:blue * 0.4 alpha:1.0];;
+    [SCNTransaction begin];
+    [SCNTransaction setAnimationDuration:0.25];
     _renderer.scene.background.contents = dimmedColor;
+    [SCNTransaction commit];
+    _comboColor = comboColor;
 }
 
 @end
