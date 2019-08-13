@@ -21,6 +21,9 @@
 - (void)tapGesture:(UIGestureRecognizer *)gestureRecognizer;
 - (SCNScene *)setupScene;
 - (SKScene *)setupOverlay;
+- (void)displayScore;
+- (void)resetGame;
+- (void)startGame;
 
 @end
 
@@ -28,10 +31,12 @@
     SCNNode *_cameraNode, *_worldNode;
     float _cameraDistance;
     Game *_game;
-    SKLabelNode *_playLabel, *_fadingLabel;
+    SKLabelNode *_playLabel, *_scoreIncrementLabel, *_scoreLabel, *_gameOverLabel;
     CGPoint _panLastTranslation;
-    SKAction *_fadingAction;
+    SKAction *_fadeInAction, *_fadeOutAction, *_scoreIncrementAction;
     id<SCNSceneRenderer> _renderer;
+    NSUInteger _score;
+    BOOL _ignoreTaps;
 }
 
 - (void)loadView
@@ -54,6 +59,7 @@
     }
     self.view.isAccessibilityElement = YES;
     self.view.accessibilityTraits = UIAccessibilityTraitAllowsDirectInteraction;
+    _ignoreTaps = NO;
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -62,10 +68,9 @@
     _renderer = (SCNView *) self.view;
     _renderer.scene = [self setupScene];
     _renderer.overlaySKScene = [self setupOverlay];
-    self.comboColor = [UIColor whiteColor];
+    self.comboColor = [UIColor blackColor];
     [self updateToSize:self.view.bounds.size];
-    _game = [Game gameWithWorldNode:_worldNode];
-    _game.delegate = self;
+    [self resetGame];
 }
 
 - (void)viewWillTransitionToSize:(CGSize)size withTransitionCoordinator:(id<UIViewControllerTransitionCoordinator>)coordinator
@@ -93,6 +98,7 @@
 
 - (void)panGesture:(UIGestureRecognizer *)gestureRecognizer
 {
+    if (!_game) return;
     UIPanGestureRecognizer *panGestureRecognizer = (UIPanGestureRecognizer *)gestureRecognizer;
     CGPoint translation = [panGestureRecognizer translationInView:self.view];
     CGPoint delta = CGPointMake(translation.x - _panLastTranslation.x, translation.y - _panLastTranslation.y);;
@@ -127,10 +133,42 @@
     NSUInteger touches = [tapGestureRecognizer numberOfTouches];
     for (NSUInteger touch = 0; touch < touches; ++ touch) {
         CGPoint point = [tapGestureRecognizer locationOfTouch:touch inView:self.view];
-        NSArray<SCNHitTestResult *> *results = [_renderer hitTest:point options:@{SCNHitTestBoundingBoxOnlyKey: @(YES), SCNHitTestOptionFirstFoundOnly: @(YES)}];
-        if (!results.count) return;
-        for (SCNHitTestResult *result in results) {
-            [_game tapNode:result.node];
+        if (_game) {
+            NSArray<SCNHitTestResult *> *results = [_renderer hitTest:point options:@{SCNHitTestBoundingBoxOnlyKey: @(YES), SCNHitTestOptionFirstFoundOnly: @(YES)}];
+            if (!results.count) return;
+            for (SCNHitTestResult *result in results)
+                [_game tapNode:result.node];
+        } else {
+            if (_ignoreTaps) return;
+            CGSize size = self.view.bounds.size;
+            point.x -= size.width / 2.0;
+            point.y = size.height - point.y - size.height / 2.0;
+            SKNode *node = [_renderer.overlaySKScene nodeAtPoint:point];
+            if (node == _playLabel) {
+                void(^actions)(void) = ^{
+                    [self startGame];
+                    self->_playLabel.hidden = YES;
+                    self->_ignoreTaps = NO;
+                };
+                [_playLabel runAction:_fadeOutAction completion:actions];
+                _ignoreTaps = YES;
+            } else if (node == _gameOverLabel) {
+                void (^actions)(void) = ^{
+                    self->_gameOverLabel.hidden = YES;
+                    [self displayScore];
+                    self->_ignoreTaps = NO;
+                };
+                [_gameOverLabel runAction:_fadeOutAction completion:actions];
+                _ignoreTaps = YES;
+            } else if (node == _scoreLabel) {
+                void (^actions)(void) = ^{
+                    self->_scoreLabel.hidden = YES;
+                    [self resetGame];
+                    self->_ignoreTaps = NO;
+                };
+                [_scoreLabel runAction:_fadeOutAction completion:actions];
+                _ignoreTaps = YES;
+            }
         }
     }
 }
@@ -166,42 +204,54 @@
     _playLabel.verticalAlignmentMode = SKLabelVerticalAlignmentModeCenter;
     _playLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeCenter;
     _playLabel.hidden = YES;
-    _fadingLabel = [SKLabelNode labelNodeWithText:@"0"];
-    _fadingLabel.fontColor = [UIColor whiteColor];
-    _fadingLabel.fontSize = self.view.bounds.size.width * 0.6;
-    _fadingLabel.verticalAlignmentMode = SKLabelVerticalAlignmentModeCenter;
-    _fadingLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeCenter;
-    _fadingLabel.hidden = YES;
-    [_fadingLabel setScale:0.0];
+    _scoreIncrementLabel = [SKLabelNode labelNodeWithText:@"0"];
+    _scoreIncrementLabel.fontColor = [UIColor whiteColor];
+    _scoreIncrementLabel.fontSize = self.view.bounds.size.width * 0.6;
+    _scoreIncrementLabel.verticalAlignmentMode = SKLabelVerticalAlignmentModeCenter;
+    _scoreIncrementLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeCenter;
+    _scoreIncrementLabel.hidden = YES;
+    [_scoreIncrementLabel setScale:0.0];
+    [_scoreIncrementLabel setAlpha:0.0];
+    _scoreLabel = [SKLabelNode labelNodeWithText:@"0"];
+    _scoreLabel.fontColor = [UIColor whiteColor];
+    _scoreLabel.fontSize = self.view.bounds.size.width * 0.2;
+    _scoreLabel.verticalAlignmentMode = SKLabelVerticalAlignmentModeCenter;
+    _scoreLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeCenter;
+    _scoreLabel.hidden = YES;
+    _gameOverLabel = [SKLabelNode labelNodeWithText:@"Game Over"];
+    _gameOverLabel.fontColor = [UIColor whiteColor];
+    _gameOverLabel.fontSize = self.view.bounds.size.width * 0.1;
+    _gameOverLabel.verticalAlignmentMode = SKLabelVerticalAlignmentModeCenter;
+    _gameOverLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeCenter;
+    _gameOverLabel.hidden = YES;
     SKScene *scene = [SKScene sceneWithSize:size];
     scene.anchorPoint = CGPointMake(0.5, 0.5);
     scene.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.0];
     [scene addChild:circle];
     [scene addChild:_playLabel];
-    [scene addChild:_fadingLabel];
-    SKAction *fadeInAction = [SKAction fadeInWithDuration:1.0];
-    SKAction *fadeOutAction = [SKAction fadeOutWithDuration:1.0];
-    SKAction *fadeAction = [SKAction sequence:@[fadeInAction, fadeOutAction]];
-    SKAction *growAction = [SKAction scaleTo:1.0 duration:2.0];
-    _fadingAction = [SKAction group:@[fadeAction, growAction]];
+    [scene addChild:_scoreIncrementLabel];
+    [scene addChild:_scoreLabel];
+    [scene addChild:_gameOverLabel];
+    _fadeInAction = [SKAction fadeInWithDuration:0.5];
+    _fadeOutAction = [SKAction fadeOutWithDuration:0.5];
+    SKAction *fadeAction = [SKAction sequence:@[_fadeInAction, _fadeOutAction]];
+    SKAction *growAction = [SKAction scaleTo:1.0 duration:1.0];
+    _scoreIncrementAction = [SKAction group:@[fadeAction, growAction]];
     return scene;
 }
 
-- (void)displayFadingString:(NSString *)string
+- (void)scoreIncrement:(NSUInteger)increment
 {
-    _fadingLabel.text = string;
-    _fadingLabel.hidden = NO;
-    void (^actions)(void) = ^{
-        [self->_fadingLabel setScale:0.0];
-        self->_fadingLabel.hidden = YES;
-    };
-    [_fadingLabel runAction:_fadingAction completion:actions];
-}
-
-- (void)displayScoreIncrement:(NSUInteger)increment
-{
-    NSString *string = [[NSString alloc] initWithFormat: @"%lu", (unsigned long) increment];
-    [self displayFadingString:string];
+    _score += increment;
+    NSString *text;
+    if (increment)
+    text = [[NSString alloc] initWithFormat: @"%lu", (unsigned long) increment];
+    else
+        text = @"✕";
+    _scoreIncrementLabel.text = text;
+    _scoreIncrementLabel.hidden = NO;
+    void (^actions)(void) = ^{self->_scoreIncrementLabel.hidden = YES;};
+    [_scoreIncrementLabel runAction:_scoreIncrementAction completion:actions];
 }
 
 - (void)setComboColor:(UIColor *)comboColor
@@ -214,6 +264,34 @@
     _renderer.scene.background.contents = dimmedColor;
     [SCNTransaction commit];
     _comboColor = comboColor;
+}
+
+- (void)gameOver
+{
+    _game = nil;
+    _gameOverLabel.hidden = NO;
+    [_gameOverLabel runAction:_fadeInAction];
+}
+
+- (void)displayScore
+{
+    _scoreLabel.text = [[NSString alloc] initWithFormat:@"%lu", (unsigned long) _score];
+    _scoreLabel.hidden = NO;
+    [_scoreLabel runAction:_fadeInAction];
+}
+
+- (void)resetGame
+{
+    _score = 0;
+    _playLabel.hidden = NO;
+    [_playLabel runAction:_fadeInAction];
+}
+
+- (void)startGame
+{
+    _score = 0;
+    _game = [Game gameWithWorldNode:_worldNode];
+    _game.delegate = self;
 }
 
 @end

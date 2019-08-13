@@ -9,48 +9,99 @@
 @import GameplayKit;
 
 #import "Game.h"
-#import "World.h"
 #import "Block.h"
-#import "ActionQueue.h"
-#import "GameDelegate.h"
 
 #define COLORS @[[UIColor redColor], [UIColor yellowColor], [UIColor greenColor], [UIColor cyanColor], [UIColor blueColor]]
 
+#define WORLD_SIZE 3
 #define MAX_COLORS_IN_WORLD 3
-#define MAX_COMBO 5
 #define MAX_BLOCKS_IN_WORLD 9
+#define MAX_COMBO 5
 
-#define LEVEL_DURATION 10
+#define MAX_LEVEL_DURATION 30
+#define MIN_LEVEL_DURATION 10
+#define COMBOS_PER_LEVEL 5
 
 @interface Game()
 
 - (instancetype)initWithWorldNode:(SCNNode *)node;
-- (void)startGame;
 - (void)comboWithBlock:(Block *)block;
 - (void)comboTimeout:(NSTimer *)timer;
+- (void)addBlockWithColor:(UIColor *)color;
+- (void)removeBlock:(Block *)block;
+- (void)gatherUp;
+- (void)updateTransform;
+- (Block *)randomCentralBlockFromBlocks:(NSArray<Block *> *)blocks;
+- (NSMutableSet<Block *> *)blocksConnectedToBlock:(Block *)block;
+- (void)blocksConnectedToPosition:(simd_float3)position notInSet:(NSMutableSet<Block *> *)set;
+- (void)connectScatteredBlocks:(NSMutableSet<Block *> *)scatteredBlocks toGatheredBlocks:(NSMutableSet<Block *> *)gatheredBlocks;
+- (void)moveScatteredBlock:(Block *)scatteredBlock towardsGatheredBlock:(Block *)gatheredBlock;
+- (void)levelUp;
 
 @end
 
 @implementation Game {
-    SCNNode *_cameraNode;
-    float _cameraDistance;
     NSMutableArray<Block *> *_comboBlocks;
     UIColor *_comboColor;
-    NSCountedSet<UIColor *> *_colorCounter;
-    NSTimer __weak *_comboTimer;
+    NSCountedSet<UIColor *> *_worldColors;
+    NSTimer __weak *_comboTimer, __weak *_levelTimer, __weak *_fillTimer;
+    Block __weak *_worldBlocks[WORLD_SIZE][WORLD_SIZE][WORLD_SIZE];
+    simd_float3 _worldMin, _worldMax;
+    NSUInteger _blockCount, _colorQueueHead, _colorQueueTail, _comboCount;
+    float _levelTime;
+    NSMutableArray<UIColor *> *_colorQueue;
+    SCNNode *_worldNode;
 }
 
 - (instancetype)initWithWorldNode:(SCNNode *)node
 {
     self =  [super init];
     if (!self) return nil;
+    _worldNode = node;
     _comboBlocks = [NSMutableArray arrayWithCapacity:MAX_COMBO];
-    _colorCounter = [[NSCountedSet alloc] initWithCapacity:MAX_COLORS_IN_WORLD];
+    _worldColors = [[NSCountedSet alloc] initWithCapacity:MAX_COLORS_IN_WORLD];
     _comboColor = [UIColor whiteColor];
     _comboTimer = nil;
-    [World worldInNode:node];
-    [self startGame];
+    _colorQueueHead = 0;
+    _colorQueueTail = 0;
+    _blockCount = 0;
+    _levelTime = MAX_LEVEL_DURATION - MIN_LEVEL_DURATION;
+    _comboCount = 0;
+    GKRandomSource *randomSource = [GKRandomSource sharedRandom];
+    NSArray *colors = [randomSource arrayByShufflingObjectsInArray:COLORS];
+    _colorQueue = [NSMutableArray arrayWithArray:colors];
+    for (NSUInteger x = 0; x < WORLD_SIZE; ++ x)
+        for (NSUInteger y = 0; y < WORLD_SIZE; ++ y)
+            for (NSUInteger z = 0; z < WORLD_SIZE; ++ z)
+                _worldBlocks[x][y][z] = nil;
+    _fillTimer = nil;
+    [self fillWorld];
+    void (^action)(NSTimer *) = ^(NSTimer *timer) {[self->_delegate gameOver];};
+    _levelTimer = [NSTimer scheduledTimerWithTimeInterval:_levelTime + MIN_LEVEL_DURATION repeats:NO block:action];
+    _comboTimer = nil;
     return self;
+}
+
+- (void)setDelegate:(id<GameDelegate>)delegate
+{
+    if (delegate == _delegate) return;
+    _delegate = delegate;
+    delegate.comboColor = _comboColor;
+}
+
+- (void)dealloc
+{
+    NSArray<Block *> *allBlocks= [Block allBlocks];
+    for (Block *block in allBlocks)
+        [self removeBlock:block];
+    if (_comboTimer)
+        [_comboTimer invalidate];
+    if (_levelTimer)
+        [_levelTimer invalidate];
+    if (_fillTimer)
+        [_fillTimer invalidate];
+    if (_delegate)
+        _delegate.comboColor = [UIColor blackColor ];
 }
 
 + (instancetype)gameWithWorldNode:(SCNNode *)node
@@ -61,33 +112,32 @@
 - (void)tapNode:(SCNNode *)node
 {
     Block *block = [Block blockForNode:node];
-    if (!block.alive) return;
+    if (!block || !block.alive) return;
     [self comboWithBlock:block];
 }
 
-- (void)startGame
+- (void)fillWorld
 {
-    GKRandomSource *randomSource = [GKRandomSource sharedRandom];
-    NSArray<UIColor *> *colors = [randomSource arrayByShufflingObjectsInArray:COLORS];
-    NSMutableArray<UIColor *> *mandatory = [NSMutableArray arrayWithCapacity:MAX_COLORS_IN_WORLD * 2];
-    NSMutableArray<UIColor *> *optional = [NSMutableArray arrayWithCapacity:MAX_COLORS_IN_WORLD * (MAX_COMBO - 2)];
-    for (NSUInteger index = 0; index < MAX_COLORS_IN_WORLD; ++ index) {
-        UIColor *color = colors[index];
-        [mandatory addObject:color];
-        [mandatory addObject:color];
-        for (NSUInteger combo = 2; combo < MAX_COMBO; ++ combo)
-            [optional addObject:color];
+    while (_worldColors.count < MAX_COLORS_IN_WORLD) {
+        UIColor *color = _colorQueue[_colorQueueHead];
+        _colorQueueHead = (_colorQueueHead + 1) % _colorQueue.count;
+        [self addBlockWithColor:color];
     }
-    NSArray<UIColor *> *randomMandatory = [randomSource arrayByShufflingObjectsInArray:mandatory];
-    NSArray<UIColor *> *randomOptional = [randomSource arrayByShufflingObjectsInArray:optional];
-    NSMutableArray<UIColor *> *randomColors = [NSMutableArray arrayWithCapacity:MAX_COLORS_IN_WORLD * 2 + (MAX_COMBO - 2) * MAX_COLORS_IN_WORLD];
-    [randomColors addObjectsFromArray:randomMandatory];
-    [randomColors addObjectsFromArray:randomOptional];
-                      for (NSUInteger index = 0; index < MAX_BLOCKS_IN_WORLD; ++ index) {
-        [World addBlockWithColor:randomColors[index]];
-                          [_colorCounter addObject:randomColors[index]];
-                      }
-    [World gatherUp];
+    NSMutableArray<UIColor *> *mandatoryColors = [NSMutableArray arrayWithCapacity:MAX_COLORS_IN_WORLD];
+    NSMutableArray<UIColor *> *optionalColors = [NSMutableArray arrayWithCapacity:MAX_COMBO * (MAX_COLORS_IN_WORLD - 2)];
+    for (UIColor *color in _worldColors) {
+        if ([_worldColors countForObject:color] == 1)
+            [mandatoryColors addObject:color];
+        for (NSUInteger count = 2; count < MAX_COMBO; ++ count)
+            [optionalColors addObject:color];
+    }
+    for (UIColor *color in mandatoryColors)
+        [self addBlockWithColor:color];
+    GKRandomSource *randomSource = [GKRandomSource sharedRandom];
+    NSArray<UIColor *> *shuffledColors = [randomSource arrayByShufflingObjectsInArray:optionalColors];
+    for (NSUInteger index = 0; _blockCount < MAX_BLOCKS_IN_WORLD; ++ index)
+        [self addBlockWithColor:shuffledColors[index]];
+    [self gatherUp];
 }
 
 - (void)comboWithBlock:(Block *)block
@@ -103,21 +153,28 @@
     UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, colorString);
     if (block.lit) return;
     if (block.color != _comboColor && _comboBlocks.count) {
-        [_delegate displayFadingString:@"✖️"];
+        if (_delegate)
+            [_delegate scoreIncrement:0];
         for (Block *comboBlock in _comboBlocks)
             comboBlock.lit = NO;
         [_comboBlocks removeAllObjects];
         [_comboTimer invalidate];
         _comboColor = [UIColor whiteColor];
-        _delegate.comboColor = [UIColor whiteColor];
+        if (_delegate)
+            _delegate.comboColor = _comboColor;
         return;
     }
     [_comboBlocks addObject:block];
     _comboColor = block.color;
-    _delegate.comboColor = _comboColor;
+    if (_delegate)
+        _delegate.comboColor = _comboColor;
     block.lit = YES;
     if (!_comboTimer)
         _comboTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(comboTimeout:) userInfo:nil repeats:NO];
+    if (_comboBlocks.count == [_worldColors countForObject:_comboColor]) {
+        [_comboTimer invalidate];
+        [self comboTimeout:nil];
+    }
 }
 
 - (void)comboTimeout:(NSTimer *)timer
@@ -126,24 +183,231 @@
         _comboBlocks[0].lit = NO;
         [_comboBlocks removeAllObjects];
     } else if (_comboBlocks.count > 1) {
-        [_delegate displayScoreIncrement:1 << (_comboBlocks.count - 2)];
-        for (Block *block in _comboBlocks) {
-            [World removeBlock:block];
-            [_colorCounter removeObject:_comboColor];
-        }
+        NSUInteger scoreIncrement = 1 << (_comboBlocks.count - 2);
+        if (_delegate)
+            [_delegate scoreIncrement:scoreIncrement];
+        for (Block *block in _comboBlocks)
+            [self removeBlock:block];
         [_comboBlocks removeAllObjects];
-        NSUInteger counter = [_colorCounter countForObject:_comboColor];
-        if (counter == 1) {
-            [World addBlockWithColor:_comboColor];
-            [_colorCounter addObject:_comboColor];
-        }
-        void (^action)(void) = ^{
-            [World gatherUp];
-        };
-        [ActionQueue enqueueAction:action];
+        ++ _comboCount;
+        if (_comboCount  == COMBOS_PER_LEVEL)
+            [self levelUp];
+        void (^actions)(NSTimer *) = ^(NSTimer *timer) {[self fillWorld];};
+        _fillTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 repeats:NO block:actions];
     }
     _comboColor = [UIColor whiteColor];
-    _delegate.comboColor = [UIColor whiteColor];
+    if (_delegate)
+        _delegate.comboColor = _comboColor;
+}
+
+- (void)addBlockWithColor:(UIColor *)color
+{
+    NSMutableArray<NSValue *> *availablePositions = [NSMutableArray arrayWithCapacity:WORLD_SIZE * WORLD_SIZE * WORLD_SIZE];
+    for (NSUInteger x = 0; x < WORLD_SIZE; ++ x) {
+        for (NSUInteger y = 0; y < WORLD_SIZE; ++ y) {
+            for (NSUInteger z = 0; z < WORLD_SIZE; ++ z) {
+                if (!_worldBlocks[x][y][z]) {
+                    NSValue *value = [NSValue valueWithSCNVector3:SCNVector3Make(x - WORLD_SIZE / 2.0 + 0.5, y - WORLD_SIZE / 2.0 + 0.5, z - WORLD_SIZE / 2.0 + 0.5)];
+                    [availablePositions addObject:value];
+                }
+            }
+        }
+    }
+    GKRandomSource *randomSource = [GKRandomSource sharedRandom];
+    NSUInteger choice = [randomSource nextIntWithUpperBound:availablePositions.count];
+    SCNVector3 position = availablePositions[choice].SCNVector3Value;
+    NSUInteger x = position.x + 1.5;
+    NSUInteger y = position.y + 1.5;
+    NSUInteger z = position.z + 1.5;
+    _worldBlocks[x][y][z] = [Block createBlockWithColor:color inWorld:_worldNode atPosition:SCNVector3ToFloat3(position)];
+    [_worldColors addObject:color];
+    ++ _blockCount;
+}
+
+- (void)removeBlock:(Block *)block
+{
+    UIColor *color = block.color;
+    [_worldColors removeObject:color];
+    if (![_worldColors countForObject:color]) {
+        _colorQueue[_colorQueueTail] = color;
+        _colorQueueTail = (_colorQueueTail + 1) % 5;
+    }
+    -- _blockCount;
+    [Block dismissBlock:block];
+}
+
+- (void)gatherUp
+{
+    NSArray<Block *> *blocks = [Block allBlocks];
+    Block *centralBlock = [self randomCentralBlockFromBlocks:blocks];
+    NSMutableSet<Block *> *gatheredBlocks = [self blocksConnectedToBlock:centralBlock];
+    NSMutableSet<Block *> *scatteredBlocks = [NSMutableSet new];
+    for (Block *block in blocks) {
+        assert(block.alive);
+        if (![gatheredBlocks containsObject:block])
+            [scatteredBlocks addObject:block];
+    }
+    [self connectScatteredBlocks:scatteredBlocks toGatheredBlocks:gatheredBlocks];
+    [self updateTransform];
+}
+
+- (void)updateTransform
+{
+    simd_float3 worldMin = simd_make_float3(0.0, 0.0, 0.0);
+    simd_float3 worldMax = simd_make_float3(0.0, 0.0, 0.0);
+    NSArray<Block *> *blocks = [Block allBlocks];;
+    for (Block *block in blocks) {
+        simd_float3 position = block.position;
+        worldMin = simd_min(simd_make_float3(position[0] - 0.5, position[1] - 0.5, position[2] - 0.5), worldMin);
+        worldMax = simd_max(simd_make_float3(position[0] + 0.5, position[1] + 0.5, position[2] + 0.5), worldMax);
+    }
+    simd_float3 difference = simd_make_float3(worldMax[0] - worldMin[0], worldMax[1] - worldMin[1], worldMax[2] - worldMin[2]);
+    simd_float3 center = simd_make_float3(worldMin[0] + difference[0] / 2.0, worldMin[1] + difference[1] / 2.0, worldMin[2] + difference[2] / 2.0);
+    if (difference[0] == 0.0 && difference[1] == 0.0 && difference[2] == 0.0) return;
+    float radius = simd_length(difference) / 2.0;
+    float scale = 1.0 / radius * 0.98;
+    [SCNTransaction begin];
+    [SCNTransaction setAnimationDuration:0.5];
+    _worldNode.simdScale = simd_make_float3(scale, scale, scale);
+    simd_float4 col0 = simd_make_float4(1.0, 0.0, 0.0, 0.0);
+    simd_float4 col1 = simd_make_float4(0.0, 1.0, 0.0, 0.0);
+    simd_float4 col2 = simd_make_float4(0.0, 0.0, 1.0, 0.0);
+    simd_float4 col3 = simd_make_float4(center[0], center[1], center[2], 1.0);
+    _worldNode.simdPivot = simd_matrix(col0, col1, col2, col3);
+    [SCNTransaction commit];
+}
+
+- (Block *)randomCentralBlockFromBlocks:(NSArray<Block *> *)blocks
+{
+    NSMutableArray<Block *> *closestBlocks = [NSMutableArray arrayWithCapacity:WORLD_SIZE * WORLD_SIZE * WORLD_SIZE];
+    float shortestDistanceSquared = +INFINITY;
+    for (Block *block in blocks) {
+        float distanceSquared = simd_length_squared(block.position);
+        if (distanceSquared < shortestDistanceSquared) {
+            [closestBlocks removeAllObjects];
+            [closestBlocks addObject:block];
+        } else if (distanceSquared == shortestDistanceSquared)
+            [closestBlocks addObject:block];
+    }
+    if (closestBlocks.count > 1) {
+        GKRandomSource *randomSource = [GKRandomSource sharedRandom];
+        NSUInteger choice = [randomSource nextIntWithUpperBound:closestBlocks.count];
+        return closestBlocks[choice];
+    }
+    return closestBlocks[0];
+}
+
+- (NSMutableSet<Block *> *)blocksConnectedToBlock:(Block *)block
+{
+    NSMutableSet<Block *> *connectedBlocks = [NSMutableSet new];
+    simd_float3 position = block.position;
+    [self blocksConnectedToPosition:position notInSet:connectedBlocks];
+    return connectedBlocks;
+}
+
+- (void)blocksConnectedToPosition:(simd_float3)position notInSet:(NSMutableSet<Block *> *)set
+{
+    NSUInteger x = position[0] + WORLD_SIZE / 2.0 - 0.5;
+    NSUInteger y = position[1] + WORLD_SIZE / 2.0 - 0.5;
+    NSUInteger z = position[2] + WORLD_SIZE / 2.0 - 0.5;
+    if (x > WORLD_SIZE - 1 || x < 0 || y > WORLD_SIZE - 1 || y < 0 || z > WORLD_SIZE - 1 || z < 0) return;
+    if (!_worldBlocks[x][y][z]) return;
+    Block *block = _worldBlocks[x][y][z];
+    if ([set containsObject:block]) return;
+    [set addObject:block];
+    [self blocksConnectedToPosition:simd_make_float3(position[0] - 1.0, position[1], position[2]) notInSet:set];
+    [self blocksConnectedToPosition:simd_make_float3(position[0], position[1] - 1.0, position[2]) notInSet:set];
+    [self blocksConnectedToPosition:simd_make_float3(position[0], position[1], position[2] - 1.0) notInSet:set];
+    [self blocksConnectedToPosition:simd_make_float3(position[0] + 1.0, position[1], position[2]) notInSet:set];
+    [self blocksConnectedToPosition:simd_make_float3(position[0], position[1] + 1.0, position[2]) notInSet:set];
+    [self blocksConnectedToPosition:simd_make_float3(position[0], position[1], position[2] + 1.0) notInSet:set];
+}
+
+- (void)connectScatteredBlocks:(NSMutableSet<Block *> *)scatteredBlocks toGatheredBlocks:(NSMutableSet<Block *> *)gatheredBlocks
+{
+    while (scatteredBlocks.count) {
+        Block *closestGatheredBlock = nil, *closestScatteredBlock = nil;
+        float shortestDistanceSquared = +INFINITY;
+        for (Block *scatteredBlock in scatteredBlocks) {
+            for (Block *gatheredBlock in gatheredBlocks) {
+                float distanceSquared = simd_distance_squared(scatteredBlock.position, gatheredBlock.position);
+                if (distanceSquared < shortestDistanceSquared) {
+                    closestGatheredBlock = gatheredBlock;
+                    closestScatteredBlock = scatteredBlock;
+                    shortestDistanceSquared = distanceSquared;
+                }
+            }
+        }
+        [gatheredBlocks addObject:closestScatteredBlock];
+        [scatteredBlocks removeObject:closestScatteredBlock];
+        [self moveScatteredBlock:closestScatteredBlock towardsGatheredBlock:closestGatheredBlock];;
+    }
+}
+
+- (void)moveScatteredBlock:(Block *)scatteredBlock towardsGatheredBlock:(Block *)gatheredBlock
+{
+    simd_float3 gatheredPosition = gatheredBlock.position;
+    simd_float3 scatteredPosition = scatteredBlock.position;
+    simd_float3 difference = simd_make_float3(scatteredPosition[0] - gatheredPosition[0], scatteredPosition[1] - gatheredPosition[1], scatteredPosition[2] - gatheredPosition[2]);
+    simd_float3 absolute = simd_abs(difference);
+    assert(simd_reduce_max(absolute));
+    float max = simd_reduce_max(absolute);
+    NSMutableArray<NSValue *> *adjacentPositions = [NSMutableArray arrayWithCapacity:3];
+    if (absolute[0] == max) {
+        simd_float3 position = simd_make_float3(gatheredPosition[0] + difference[0] / absolute[0], gatheredPosition[1], gatheredPosition[2]);
+        SCNVector3 vector = SCNVector3FromFloat3(position);
+        NSValue *value = [NSValue valueWithSCNVector3:vector];
+        [adjacentPositions addObject:value];
+    }
+    if (absolute[1] == max) {
+        simd_float3 position = simd_make_float3(gatheredPosition[0], gatheredPosition[1] + difference[1] / absolute[1], gatheredPosition[2]);
+        SCNVector3 vector = SCNVector3FromFloat3(position);
+        NSValue *value = [NSValue valueWithSCNVector3:vector];
+        [adjacentPositions addObject:value];
+    }
+    if (absolute[2] == max) {
+        simd_float3 position = simd_make_float3(gatheredPosition[0], gatheredPosition[1], gatheredPosition[2] + difference[2] / absolute[2]);
+        SCNVector3 vector = SCNVector3FromFloat3(position);
+        NSValue *value = [NSValue valueWithSCNVector3:vector];
+        [adjacentPositions addObject:value];
+    }
+    NSValue *value;
+    if (adjacentPositions.count > 1) {
+        GKRandomSource *randomSource = [GKRandomSource sharedRandom];
+        NSUInteger choice = [randomSource nextIntWithUpperBound:adjacentPositions.count];
+        value = adjacentPositions[choice];
+    } else
+        value = adjacentPositions[0];
+    SCNVector3 position = value.SCNVector3Value;
+    simd_float3 simdPosition = SCNVector3ToFloat3(position);
+    [self moveBlock:scatteredBlock toPosition:simdPosition];
+}
+
+- (void)moveBlock:(Block *)block toPosition:(simd_float3)newPosition
+{
+    simd_float3 oldPosition = block.position;
+    if (simd_equal(oldPosition, newPosition)) return;
+    NSUInteger oldX = oldPosition[0] + WORLD_SIZE / 2.0 - 0.5;
+    NSUInteger oldY = oldPosition[1] + WORLD_SIZE / 2.0 - 0.5;
+    NSUInteger oldZ = oldPosition[2] + WORLD_SIZE / 2.0 - 0.5;
+    assert(_worldBlocks[oldX][oldY][oldZ]);
+    assert(_worldBlocks[oldX][oldY][oldZ] == block);
+    NSUInteger newX = newPosition[0] + WORLD_SIZE / 2.0 - 0.5;
+    NSUInteger newY = newPosition[1] + WORLD_SIZE / 2.0 - 0.5;
+    NSUInteger newZ = newPosition[2] + WORLD_SIZE / 2.0 - 0.5;
+    assert(!_worldBlocks[newX][newY][newZ]);
+    _worldBlocks[newX][newY][newZ] = block;
+    _worldBlocks[oldX][oldY][oldZ] = nil;
+    block.position = newPosition;
+}
+
+- (void)levelUp
+{
+    _comboCount = 0;
+    _levelTime *= 0.8;
+    [_levelTimer invalidate];
+    void (^action)(NSTimer *) = ^(NSTimer *timer) {if (self->_delegate) [self->_delegate gameOver];};
+    _levelTimer = [NSTimer scheduledTimerWithTimeInterval:_levelTime + MIN_LEVEL_DURATION repeats:NO block:action];
 }
 
 @end

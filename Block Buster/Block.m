@@ -8,7 +8,6 @@
 
 #import <objc/runtime.h>
 #import "Block.h"
-#import "ActionQueue.h"
 
 static SCNGeometry *commonGeometry;
 static NSMutableDictionary<UIColor *, NSArray<SCNMaterial *> *> *unlitMaterials;
@@ -103,7 +102,7 @@ static NSMutableSet<Block *> *blockSet;
     _position = position;
     [SCNTransaction begin];
     [SCNTransaction setAnimationDuration:0.5];
-    self->_node.simdPosition = position;
+    _node.simdPosition = position;
     [SCNTransaction commit];
 }
 
@@ -213,8 +212,9 @@ property.minificationFilter = SCNFilterModeNearest;
     CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"scale"];
     animation.fromValue = [NSValue valueWithSCNVector3:SCNVector3Make(0.0, 0.0, 0.0)];
     animation.toValue = [NSValue valueWithSCNVector3:SCNVector3Make(1.0, 1.0, 1.0)];
-    animation.duration = 1.0 / 4.0;
+    animation.duration = 0.5;
     animation.removedOnCompletion = YES;
+    animation.usesSceneTimeBase = NO;
     return [SCNAnimation animationWithCAAnimation:animation];
 }
 
@@ -222,7 +222,7 @@ property.minificationFilter = SCNFilterModeNearest;
 {
     CABasicAnimation *animation = [CABasicAnimation animationWithKeyPath:@"scale"];
     animation.toValue = [NSValue valueWithSCNVector3:SCNVector3Make(0.0, 0.0, 0.0)];
-    animation.duration = 1.0 / 4.0;
+    animation.duration = 0.5;
     animation.removedOnCompletion = YES;
     animation.usesSceneTimeBase = NO;
     return [SCNAnimation animationWithCAAnimation:animation];
