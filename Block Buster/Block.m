@@ -78,9 +78,9 @@ static NSMutableSet<Block *> *blockSet;
     return objc_getAssociatedObject(node, (__bridge void *) node);
 }
 
-+ (NSArray<Block *> *)allBlocks;
++ (NSSet<Block *> *)blockSet;
 {
-    return [blockSet allObjects];
+    return blockSet;
 }
 
 - (void)dealloc

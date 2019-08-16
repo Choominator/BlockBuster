@@ -31,11 +31,10 @@
 - (void)removeBlock:(Block *)block;
 - (void)gatherUp;
 - (void)updateTransform;
-- (Block *)randomCentralBlockFromBlocks:(NSArray<Block *> *)blocks;
-- (NSMutableSet<Block *> *)blocksConnectedToBlock:(Block *)block;
-- (void)blocksConnectedToPosition:(simd_float3)position notInSet:(NSMutableSet<Block *> *)set;
-- (void)connectScatteredBlocks:(NSMutableSet<Block *> *)scatteredBlocks toGatheredBlocks:(NSMutableSet<Block *> *)gatheredBlocks;
+- (Block *)randomBlockFromBlocks:(NSSet<Block *> *)blocks closestToPosition:(simd_float3) position;
+- (void)blocksConnectedToPosition:(simd_float3)position addToSet:(NSMutableSet<Block *> *)set;
 - (void)moveScatteredBlock:(Block *)scatteredBlock towardsGatheredBlock:(Block *)gatheredBlock;
+- (void)moveBlock:(Block *)block toPosition:(simd_float3)newPosition;
 - (void)levelUp;
 
 @end
@@ -91,7 +90,7 @@
 
 - (void)dealloc
 {
-    NSArray<Block *> *allBlocks= [Block allBlocks];
+    NSSet<Block *> *allBlocks= [Block blockSet];
     for (Block *block in allBlocks)
         [self removeBlock:block];
     if (_comboTimer)
@@ -238,16 +237,30 @@
 
 - (void)gatherUp
 {
-    NSArray<Block *> *blocks = [Block allBlocks];
-    Block *centralBlock = [self randomCentralBlockFromBlocks:blocks];
-    NSMutableSet<Block *> *gatheredBlocks = [self blocksConnectedToBlock:centralBlock];
-    NSMutableSet<Block *> *scatteredBlocks = [NSMutableSet new];
-    for (Block *block in blocks) {
-        assert(block.alive);
-        if (![gatheredBlocks containsObject:block])
-            [scatteredBlocks addObject:block];
-    }
-    [self connectScatteredBlocks:scatteredBlocks toGatheredBlocks:gatheredBlocks];
+    NSSet<Block *> *allBlocks = [Block blockSet];
+    if (!allBlocks.count) return;
+    NSMutableSet<Block *> *scatteredBlocks = [NSMutableSet setWithSet:allBlocks];
+    NSMutableSet<Block *> *gatheredBlocks = [NSMutableSet setWithCapacity:allBlocks.count];
+    Block *centralBlock = [self randomBlockFromBlocks:allBlocks closestToPosition:simd_make_float3(0.0, 0.0, 0.0)];
+    do {
+        [gatheredBlocks removeAllObjects];
+        [self blocksConnectedToPosition:centralBlock.position addToSet:gatheredBlocks];
+        [scatteredBlocks minusSet:gatheredBlocks];
+        float shortestDistanceSquared = INFINITY;
+        Block *closestGatheredBlock = nil;
+        Block *closestScatteredBlock = nil;
+        for (Block *scatteredBlock in scatteredBlocks) {
+            Block *gatheredBlock = [self randomBlockFromBlocks:gatheredBlocks closestToPosition:scatteredBlock.position];
+            float distanceSquared = simd_distance_squared(scatteredBlock.position, gatheredBlock.position);
+            if (distanceSquared < shortestDistanceSquared) {
+                closestScatteredBlock = scatteredBlock;
+                closestGatheredBlock = gatheredBlock;
+                shortestDistanceSquared = distanceSquared;
+            }
+        }
+        if (shortestDistanceSquared < INFINITY)
+            [self moveScatteredBlock:closestScatteredBlock towardsGatheredBlock:closestGatheredBlock];
+    } while (scatteredBlocks.count);
     [self updateTransform];
 }
 
@@ -255,7 +268,7 @@
 {
     simd_float3 worldMin = simd_make_float3(0.0, 0.0, 0.0);
     simd_float3 worldMax = simd_make_float3(0.0, 0.0, 0.0);
-    NSArray<Block *> *blocks = [Block allBlocks];;
+    NSSet<Block *> *blocks = [Block blockSet];;
     for (Block *block in blocks) {
         simd_float3 position = block.position;
         worldMin = simd_min(simd_make_float3(position[0] - 0.5, position[1] - 0.5, position[2] - 0.5), worldMin);
@@ -277,13 +290,14 @@
     [SCNTransaction commit];
 }
 
-- (Block *)randomCentralBlockFromBlocks:(NSArray<Block *> *)blocks
+- (Block *)randomBlockFromBlocks:(NSSet<Block *> *)blocks closestToPosition:(simd_float3) position;
 {
-    NSMutableArray<Block *> *closestBlocks = [NSMutableArray arrayWithCapacity:WORLD_SIZE * WORLD_SIZE * WORLD_SIZE];
-    float shortestDistanceSquared = +INFINITY;
+    NSMutableArray<Block *> *closestBlocks = [NSMutableArray arrayWithCapacity:blocks.count];
+    float shortestDistanceSquared = INFINITY;
     for (Block *block in blocks) {
-        float distanceSquared = simd_length_squared(block.position);
+        float distanceSquared = simd_distance_squared(position, block.position);
         if (distanceSquared < shortestDistanceSquared) {
+            shortestDistanceSquared = distanceSquared;
             [closestBlocks removeAllObjects];
             [closestBlocks addObject:block];
         } else if (distanceSquared == shortestDistanceSquared)
@@ -297,15 +311,7 @@
     return closestBlocks[0];
 }
 
-- (NSMutableSet<Block *> *)blocksConnectedToBlock:(Block *)block
-{
-    NSMutableSet<Block *> *connectedBlocks = [NSMutableSet new];
-    simd_float3 position = block.position;
-    [self blocksConnectedToPosition:position notInSet:connectedBlocks];
-    return connectedBlocks;
-}
-
-- (void)blocksConnectedToPosition:(simd_float3)position notInSet:(NSMutableSet<Block *> *)set
+- (void)blocksConnectedToPosition:(simd_float3)position addToSet:(NSMutableSet<Block *> *)set
 {
     NSUInteger x = position[0] + WORLD_SIZE / 2.0 - 0.5;
     NSUInteger y = position[1] + WORLD_SIZE / 2.0 - 0.5;
@@ -315,33 +321,12 @@
     Block *block = _worldBlocks[x][y][z];
     if ([set containsObject:block]) return;
     [set addObject:block];
-    [self blocksConnectedToPosition:simd_make_float3(position[0] - 1.0, position[1], position[2]) notInSet:set];
-    [self blocksConnectedToPosition:simd_make_float3(position[0], position[1] - 1.0, position[2]) notInSet:set];
-    [self blocksConnectedToPosition:simd_make_float3(position[0], position[1], position[2] - 1.0) notInSet:set];
-    [self blocksConnectedToPosition:simd_make_float3(position[0] + 1.0, position[1], position[2]) notInSet:set];
-    [self blocksConnectedToPosition:simd_make_float3(position[0], position[1] + 1.0, position[2]) notInSet:set];
-    [self blocksConnectedToPosition:simd_make_float3(position[0], position[1], position[2] + 1.0) notInSet:set];
-}
-
-- (void)connectScatteredBlocks:(NSMutableSet<Block *> *)scatteredBlocks toGatheredBlocks:(NSMutableSet<Block *> *)gatheredBlocks
-{
-    while (scatteredBlocks.count) {
-        Block *closestGatheredBlock = nil, *closestScatteredBlock = nil;
-        float shortestDistanceSquared = +INFINITY;
-        for (Block *scatteredBlock in scatteredBlocks) {
-            for (Block *gatheredBlock in gatheredBlocks) {
-                float distanceSquared = simd_distance_squared(scatteredBlock.position, gatheredBlock.position);
-                if (distanceSquared < shortestDistanceSquared) {
-                    closestGatheredBlock = gatheredBlock;
-                    closestScatteredBlock = scatteredBlock;
-                    shortestDistanceSquared = distanceSquared;
-                }
-            }
-        }
-        [gatheredBlocks addObject:closestScatteredBlock];
-        [scatteredBlocks removeObject:closestScatteredBlock];
-        [self moveScatteredBlock:closestScatteredBlock towardsGatheredBlock:closestGatheredBlock];;
-    }
+    [self blocksConnectedToPosition:simd_make_float3(position[0] - 1.0, position[1], position[2]) addToSet:set];
+    [self blocksConnectedToPosition:simd_make_float3(position[0], position[1] - 1.0, position[2]) addToSet:set];
+    [self blocksConnectedToPosition:simd_make_float3(position[0], position[1], position[2] - 1.0) addToSet:set];
+    [self blocksConnectedToPosition:simd_make_float3(position[0] + 1.0, position[1], position[2]) addToSet:set];
+    [self blocksConnectedToPosition:simd_make_float3(position[0], position[1] + 1.0, position[2]) addToSet:set];
+    [self blocksConnectedToPosition:simd_make_float3(position[0], position[1], position[2] + 1.0) addToSet:set];
 }
 
 - (void)moveScatteredBlock:(Block *)scatteredBlock towardsGatheredBlock:(Block *)gatheredBlock
