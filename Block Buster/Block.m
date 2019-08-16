@@ -9,6 +9,7 @@
 #import <objc/runtime.h>
 #import "Block.h"
 
+NSNotificationName const BlockSafeToFillWorldNotification = @"BlockSafeToFillWorld";
 extern NSNotificationCenter *gameNotificationCenter;
 static SCNGeometry *commonGeometry;
 static NSMutableDictionary<UIColor *, NSArray<SCNMaterial *> *> *unlitMaterials;
@@ -16,20 +17,6 @@ static NSMutableDictionary<UIColor *, NSArray<SCNMaterial *> *> *litMaterials;
 static NSMutableDictionary<UIColor *, UIImage *> *emissionImages;
 static NSMutableDictionary<UIColor *, UIImage *> *diffuseImages;
 static NSMutableSet<Block *> *blockSet, *deadBlockSet;
-
-@interface Block()
-
-- (instancetype)initWithColor:(UIColor *) color inWorld:(SCNNode *)world atPosition:(simd_float3)position;
-- (SCNGeometry *)setupGeometry;
-- (NSArray<SCNMaterial *> *)unlitMaterials;
-- (NSArray<SCNMaterial *> *)litMaterials;
-- (SCNMaterial *)commonMaterial;
-- (UIImage *)diffuseImage;
-- (UIImage *)emissionImage;
-- (SCNAnimation *)setupCreation;
-- (SCNAnimation *)setupDestruction;
-
-@end
 
 @implementation Block {
     NSArray<SCNMaterial *> *_litMaterials, *_unlitMaterials;
@@ -91,7 +78,7 @@ static NSMutableSet<Block *> *blockSet, *deadBlockSet;
 - (void)dealloc
 {
         if (!deadBlockSet.count)
-            [gameNotificationCenter postNotificationName:@"SafeToRefillWorld" object:self];
+            [gameNotificationCenter postNotificationName:BlockSafeToFillWorldNotification object:self];
     [_node removeFromParentNode];
 }
 

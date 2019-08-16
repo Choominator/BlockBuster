@@ -24,30 +24,14 @@
 
 extern NSNotificationCenter *gameNotificationCenter;
 
-@interface Game()
-
-- (instancetype)initWithWorldNode:(SCNNode *)node;
-- (void)comboWithBlock:(Block *)block;
-- (void)comboTimeout:(NSTimer *)timer;
-- (void)addBlockWithColor:(UIColor *)color;
-- (void)removeBlock:(Block *)block;
-- (void)fillWorld;
-- (void)gatherUp;
-- (void)updateTransform;
-- (Block *)randomBlockFromBlocks:(NSSet<Block *> *)blocks closestToPosition:(simd_float3) position;
-- (void)blocksConnectedToPosition:(simd_float3)position addToSet:(NSMutableSet<Block *> *)set;
-- (void)moveScatteredBlock:(Block *)scatteredBlock towardsGatheredBlock:(Block *)gatheredBlock;
-- (void)moveBlock:(Block *)block toPosition:(simd_float3)newPosition;
-- (void)levelUp;
-- (void)safeToRefillWorldNotification:(NSNotification *)notification;
-
-@end
+NSNotificationName const GameShouldChangeBackgroundColorNotification = @"GameShouldChangeBackgroundColor";
+NSNotificationName const GameScoreIncrementNotification = @"GameScoreIncrement";
+NSNotificationName const GameOverNotification = @"GameOver";;
 
 @implementation Game {
     NSMutableArray<Block *> *_comboBlocks;
-    UIColor *_comboColor;
     NSCountedSet<UIColor *> *_worldColors;
-    NSTimer __weak *_comboTimer, __weak *_levelTimer, __weak *_fillTimer;
+    NSTimer __weak *_comboTimer, __weak *_levelTimer;
     Block __weak *_worldBlocks[WORLD_SIZE][WORLD_SIZE][WORLD_SIZE];
     simd_float3 _worldMin, _worldMax;
     NSUInteger _blockCount, _colorQueueHead, _colorQueueTail, _comboCount;
@@ -77,20 +61,12 @@ extern NSNotificationCenter *gameNotificationCenter;
         for (NSUInteger y = 0; y < WORLD_SIZE; ++ y)
             for (NSUInteger z = 0; z < WORLD_SIZE; ++ z)
                 _worldBlocks[x][y][z] = nil;
-    _fillTimer = nil;
     [self fillWorld];
-    void (^action)(NSTimer *) = ^(NSTimer *timer) {[self->_delegate gameOver];};
+    void (^action)(NSTimer *) = ^(NSTimer *timer) {[gameNotificationCenter postNotificationName:GameOverNotification object:self];};
     _levelTimer = [NSTimer scheduledTimerWithTimeInterval:_levelTime + MIN_LEVEL_DURATION repeats:NO block:action];
     _comboTimer = nil;
-    [gameNotificationCenter addObserver:self selector:@selector(safeToRefillWorldNotification:) name:@"SafeToRefillWorld" object:nil];
+    [gameNotificationCenter addObserver:self selector:@selector(safeToFillWorld:) name:BlockSafeToFillWorldNotification object:nil];
     return self;
-}
-
-- (void)setDelegate:(id<GameDelegate>)delegate
-{
-    if (delegate == _delegate) return;
-    _delegate = delegate;
-    delegate.comboColor = _comboColor;
 }
 
 - (void)dealloc
@@ -102,8 +78,7 @@ extern NSNotificationCenter *gameNotificationCenter;
         [_comboTimer invalidate];
     if (_levelTimer)
         [_levelTimer invalidate];
-    if (_delegate)
-        _delegate.comboColor = [UIColor blackColor ];
+    [gameNotificationCenter postNotificationName:GameShouldChangeBackgroundColorNotification object:self userInfo:@{@"Color": [UIColor blackColor]}];
 }
 
 + (instancetype)gameWithWorldNode:(SCNNode *)node
@@ -155,25 +130,22 @@ extern NSNotificationCenter *gameNotificationCenter;
     UIAccessibilityPostNotification(UIAccessibilityAnnouncementNotification, colorString);
     if (block.lit) return;
     if (block.color != _comboColor && _comboBlocks.count) {
-        if (_delegate)
-            [_delegate scoreIncrement:0];
+        [gameNotificationCenter postNotificationName:GameScoreIncrementNotification object:self userInfo:@{@"Increment": @(0)}];
         for (Block *comboBlock in _comboBlocks)
             comboBlock.lit = NO;
         [_comboBlocks removeAllObjects];
         [_comboTimer invalidate];
-        _comboColor = [UIColor whiteColor];
-        if (_delegate)
-            _delegate.comboColor = _comboColor;
+                                                                                              _comboColor = [UIColor whiteColor];
+        [gameNotificationCenter postNotificationName:GameShouldChangeBackgroundColorNotification object:self userInfo:@{@"Color": _comboColor}];
         return;
     }
     [_comboBlocks addObject:block];
     _comboColor = block.color;
-    if (_delegate)
-        _delegate.comboColor = _comboColor;
+    [gameNotificationCenter postNotificationName:GameShouldChangeBackgroundColorNotification object:self userInfo:@{@"Color": _comboColor}];
     block.lit = YES;
     if (!_comboTimer)
         [_comboTimer invalidate];
-    _comboTimer = [NSTimer scheduledTimerWithTimeInterval:0.25 target:self selector:@selector(comboTimeout:) userInfo:nil repeats:NO];
+    _comboTimer = [NSTimer scheduledTimerWithTimeInterval:0.5 target:self selector:@selector(comboTimeout:) userInfo:nil repeats:NO];
     if (_comboBlocks.count == [_worldColors countForObject:_comboColor]) {
         [_comboTimer invalidate];
         [self comboTimeout:nil];
@@ -187,8 +159,7 @@ extern NSNotificationCenter *gameNotificationCenter;
         [_comboBlocks removeAllObjects];
     } else if (_comboBlocks.count > 1) {
         NSUInteger scoreIncrement = 1 << (_comboBlocks.count - 2);
-        if (_delegate)
-            [_delegate scoreIncrement:scoreIncrement];
+        [gameNotificationCenter postNotificationName:GameScoreIncrementNotification object:self userInfo:@{@"Increment": @(scoreIncrement)}];
         for (Block *block in _comboBlocks)
             [self removeBlock:block];
         [_comboBlocks removeAllObjects];
@@ -197,8 +168,7 @@ extern NSNotificationCenter *gameNotificationCenter;
             [self levelUp];
     }
     _comboColor = [UIColor whiteColor];
-    if (_delegate)
-        _delegate.comboColor = _comboColor;
+    [gameNotificationCenter postNotificationName:GameShouldChangeBackgroundColorNotification object:self userInfo:@{@"Color": _comboColor}];
 }
 
 - (void)addBlockWithColor:(UIColor *)color
@@ -398,11 +368,11 @@ extern NSNotificationCenter *gameNotificationCenter;
     _comboCount = 0;
     _levelTime *= 0.8;
     [_levelTimer invalidate];
-    void (^action)(NSTimer *) = ^(NSTimer *timer) {if (self->_delegate) [self->_delegate gameOver];};
+    void (^action)(NSTimer *) = ^(NSTimer *timer) {[gameNotificationCenter postNotificationName:GameOverNotification object:self];};
     _levelTimer = [NSTimer scheduledTimerWithTimeInterval:_levelTime + MIN_LEVEL_DURATION repeats:NO block:action];
 }
 
-- (void)safeToRefillWorldNotification:(NSNotification *)notification
+- (void)safeToFillWorld:(NSNotification *)notification
 {
     [self fillWorld];
 }

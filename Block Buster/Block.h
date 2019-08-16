@@ -10,6 +10,8 @@
 
 NS_ASSUME_NONNULL_BEGIN
 
+extern NSNotificationName const BlockSafeToFillWorldNotification;
+
 @interface Block : NSObject
 
 @property (nonatomic, readonly) UIColor *color;

@@ -8,13 +8,15 @@
 
 @import SceneKit;
 
-#import "GameDelegate.h"
-
 NS_ASSUME_NONNULL_BEGIN
+
+extern NSNotificationName const GameShouldChangeBackgroundColorNotification;
+extern NSNotificationName const GameScoreIncrementNotification;
+extern  NSNotificationName const GameOverNotification;
 
 @interface Game : NSObject
 
-@property (weak, nonatomic) id<GameDelegate> delegate;
+@property (nonatomic, readonly) UIColor *comboColor;
 
 + (instancetype)gameWithWorldNode:(SCNNode *)node;
 - (void)tapNode:(SCNNode *)node;

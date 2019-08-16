@@ -8,13 +8,6 @@
 
 @import UIKit;
 
-#import "GameDelegate.h"
-
-@interface GameViewController : UIViewController <GameDelegate>
-
-@property (weak, nonatomic) UIColor *comboColor;
-
-- (void)scoreIncrement:(NSUInteger)increment;
-- (void)gameOver;
+@interface GameViewController : UIViewController
 
 @end

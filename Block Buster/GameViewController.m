@@ -12,20 +12,9 @@
 #import "GameViewController.h"
 #import "Game.h"
 
+extern NSNotificationCenter *gameNotificationCenter;
+
 #define CAMERA_FIELD_OF_VIEW 30.0
-
-@interface GameViewController()
-
-- (void)updateToSize:(CGSize)size;
-- (void)panGesture:(UIGestureRecognizer *)gestureRecognizer;
-- (void)tapGesture:(UIGestureRecognizer *)gestureRecognizer;
-- (SCNScene *)setupScene;
-- (SKScene *)setupOverlay;
-- (void)displayScore;
-- (void)resetGame;
-- (void)startGame;
-
-@end
 
 @implementation GameViewController {
     SCNNode *_cameraNode, *_worldNode;
@@ -68,8 +57,11 @@
     _renderer = (SCNView *) self.view;
     _renderer.scene = [self setupScene];
     _renderer.overlaySKScene = [self setupOverlay];
-    self.comboColor = [UIColor blackColor];
+    _renderer.scene.background.contents = [UIColor blackColor];
     [self updateToSize:self.view.bounds.size];
+    [gameNotificationCenter addObserver:self selector:@selector(shouldChangeBackgroundColor:) name:GameShouldChangeBackgroundColorNotification object:nil];
+    [gameNotificationCenter addObserver:self selector:@selector(scoreIncrement:) name:GameScoreIncrementNotification object:nil];
+    [gameNotificationCenter addObserver:self selector:@selector(gameOver:) name:GameOverNotification object:nil];
     [self resetGame];
 }
 
@@ -240,8 +232,10 @@
     return scene;
 }
 
-- (void)scoreIncrement:(NSUInteger)increment
+- (void)scoreIncrement:(NSNotification *)notification
 {
+    NSNumber *number = notification.userInfo[@"Increment"];
+    NSUInteger increment = number.unsignedIntegerValue;
     _score += increment;
     NSString *text;
     if (increment)
@@ -254,19 +248,19 @@
     [_scoreIncrementLabel runAction:_scoreIncrementAction completion:actions];
 }
 
-- (void)setComboColor:(UIColor *)comboColor
+- (void)shouldChangeBackgroundColor:(NSNotification *)notification
 {
+    UIColor *color = notification.userInfo[@"Color"];
     CGFloat red, green, blue;
-    assert([comboColor getRed:&red green:&green blue:&blue alpha:NULL]);
+    assert([color getRed:&red green:&green blue:&blue alpha:NULL]);
     UIColor *dimmedColor = [UIColor colorWithRed:red * 0.4 green:green * 0.4 blue:blue * 0.4 alpha:1.0];;
     [SCNTransaction begin];
     [SCNTransaction setAnimationDuration:0.25];
     _renderer.scene.background.contents = dimmedColor;
     [SCNTransaction commit];
-    _comboColor = comboColor;
 }
 
-- (void)gameOver
+- (void)gameOver:(NSNotification *)notification
 {
     _game = nil;
     _gameOverLabel.hidden = NO;
@@ -291,7 +285,6 @@
 {
     _score = 0;
     _game = [Game gameWithWorldNode:_worldNode];
-    _game.delegate = self;
 }
 
 @end
