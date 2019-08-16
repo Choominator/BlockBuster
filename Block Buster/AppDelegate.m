@@ -9,6 +9,8 @@
 #import "AppDelegate.h"
 #import "GameViewController.h"
 
+NSNotificationCenter *gameNotificationCenter;
+
 @interface AppDelegate ()
 
 @end
@@ -18,6 +20,7 @@
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
+    gameNotificationCenter = [NSNotificationCenter new];
     _window = [UIWindow new];
     _window.rootViewController = [GameViewController new];
     [_window makeKeyAndVisible];

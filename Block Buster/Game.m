@@ -22,6 +22,8 @@
 #define MIN_LEVEL_DURATION 10
 #define COMBOS_PER_LEVEL 5
 
+extern NSNotificationCenter *gameNotificationCenter;
+
 @interface Game()
 
 - (instancetype)initWithWorldNode:(SCNNode *)node;
@@ -29,6 +31,7 @@
 - (void)comboTimeout:(NSTimer *)timer;
 - (void)addBlockWithColor:(UIColor *)color;
 - (void)removeBlock:(Block *)block;
+- (void)fillWorld;
 - (void)gatherUp;
 - (void)updateTransform;
 - (Block *)randomBlockFromBlocks:(NSSet<Block *> *)blocks closestToPosition:(simd_float3) position;
@@ -36,6 +39,7 @@
 - (void)moveScatteredBlock:(Block *)scatteredBlock towardsGatheredBlock:(Block *)gatheredBlock;
 - (void)moveBlock:(Block *)block toPosition:(simd_float3)newPosition;
 - (void)levelUp;
+- (void)safeToRefillWorldNotification:(NSNotification *)notification;
 
 @end
 
@@ -78,6 +82,7 @@
     void (^action)(NSTimer *) = ^(NSTimer *timer) {[self->_delegate gameOver];};
     _levelTimer = [NSTimer scheduledTimerWithTimeInterval:_levelTime + MIN_LEVEL_DURATION repeats:NO block:action];
     _comboTimer = nil;
+    [gameNotificationCenter addObserver:self selector:@selector(safeToRefillWorldNotification:) name:@"SafeToRefillWorld" object:nil];
     return self;
 }
 
@@ -90,15 +95,13 @@
 
 - (void)dealloc
 {
-    NSSet<Block *> *allBlocks= [Block blockSet];
+    NSArray<Block *> *allBlocks= [[Block blockSet] allObjects];
     for (Block *block in allBlocks)
         [self removeBlock:block];
     if (_comboTimer)
         [_comboTimer invalidate];
     if (_levelTimer)
         [_levelTimer invalidate];
-    if (_fillTimer)
-        [_fillTimer invalidate];
     if (_delegate)
         _delegate.comboColor = [UIColor blackColor ];
 }
@@ -169,7 +172,8 @@
         _delegate.comboColor = _comboColor;
     block.lit = YES;
     if (!_comboTimer)
-        _comboTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 target:self selector:@selector(comboTimeout:) userInfo:nil repeats:NO];
+        [_comboTimer invalidate];
+    _comboTimer = [NSTimer scheduledTimerWithTimeInterval:0.25 target:self selector:@selector(comboTimeout:) userInfo:nil repeats:NO];
     if (_comboBlocks.count == [_worldColors countForObject:_comboColor]) {
         [_comboTimer invalidate];
         [self comboTimeout:nil];
@@ -191,8 +195,6 @@
         ++ _comboCount;
         if (_comboCount  == COMBOS_PER_LEVEL)
             [self levelUp];
-        void (^actions)(NSTimer *) = ^(NSTimer *timer) {[self fillWorld];};
-        _fillTimer = [NSTimer scheduledTimerWithTimeInterval:1.0 repeats:NO block:actions];
     }
     _comboColor = [UIColor whiteColor];
     if (_delegate)
@@ -215,9 +217,9 @@
     GKRandomSource *randomSource = [GKRandomSource sharedRandom];
     NSUInteger choice = [randomSource nextIntWithUpperBound:availablePositions.count];
     SCNVector3 position = availablePositions[choice].SCNVector3Value;
-    NSUInteger x = position.x + 1.5;
-    NSUInteger y = position.y + 1.5;
-    NSUInteger z = position.z + 1.5;
+    NSUInteger x = position.x + WORLD_SIZE / 2.0 - 0.5;
+    NSUInteger y = position.y + WORLD_SIZE / 2.0 - 0.5;;
+    NSUInteger z = position.z + WORLD_SIZE / 2.0 - 0.5;
     _worldBlocks[x][y][z] = [Block createBlockWithColor:color inWorld:_worldNode atPosition:SCNVector3ToFloat3(position)];
     [_worldColors addObject:color];
     ++ _blockCount;
@@ -232,6 +234,11 @@
         _colorQueueTail = (_colorQueueTail + 1) % 5;
     }
     -- _blockCount;
+    simd_float3 position = block.position;
+    NSUInteger x = position[0] + WORLD_SIZE / 2.0 - 0.5;
+    NSUInteger y = position[1] + WORLD_SIZE / 2.0 - 0.5;;
+    NSUInteger z = position[2] + WORLD_SIZE / 2.0 - 0.5;
+    _worldBlocks[x][y][z] = nil;
     [Block dismissBlock:block];
 }
 
@@ -393,6 +400,11 @@
     [_levelTimer invalidate];
     void (^action)(NSTimer *) = ^(NSTimer *timer) {if (self->_delegate) [self->_delegate gameOver];};
     _levelTimer = [NSTimer scheduledTimerWithTimeInterval:_levelTime + MIN_LEVEL_DURATION repeats:NO block:action];
+}
+
+- (void)safeToRefillWorldNotification:(NSNotification *)notification
+{
+    [self fillWorld];
 }
 
 @end

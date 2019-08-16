@@ -9,12 +9,13 @@
 #import <objc/runtime.h>
 #import "Block.h"
 
+extern NSNotificationCenter *gameNotificationCenter;
 static SCNGeometry *commonGeometry;
 static NSMutableDictionary<UIColor *, NSArray<SCNMaterial *> *> *unlitMaterials;
 static NSMutableDictionary<UIColor *, NSArray<SCNMaterial *> *> *litMaterials;
 static NSMutableDictionary<UIColor *, UIImage *> *emissionImages;
 static NSMutableDictionary<UIColor *, UIImage *> *diffuseImages;
-static NSMutableSet<Block *> *blockSet;
+static NSMutableSet<Block *> *blockSet, *deadBlockSet;
 
 @interface Block()
 
@@ -54,6 +55,8 @@ static NSMutableSet<Block *> *blockSet;
     if (!blockSet)
         blockSet = [NSMutableSet new];
     [blockSet addObject:block];
+    if (!deadBlockSet)
+        deadBlockSet = [NSMutableSet new];
     [world addChildNode:block->_node];
     SCNAnimation *animation = [block setupCreation];
     [block->_node addAnimation:animation forKey:nil];
@@ -64,9 +67,11 @@ static NSMutableSet<Block *> *blockSet;
 + (void)dismissBlock:(Block *)block
 {
     block->_alive = NO;
+    [deadBlockSet addObject:block];
+    [blockSet removeObject:block];
     SCNAnimationDidStopBlock animationActions = ^(SCNAnimation *animation, id<SCNAnimatable> receiver, BOOL completed) {
         block->_node.geometry = nil;
-        [blockSet removeObject:block];
+        [deadBlockSet removeObject:block];
     };
     SCNAnimation *animation = [block setupDestruction];
     animation.animationDidStop = animationActions;
@@ -85,6 +90,8 @@ static NSMutableSet<Block *> *blockSet;
 
 - (void)dealloc
 {
+        if (!deadBlockSet.count)
+            [gameNotificationCenter postNotificationName:@"SafeToRefillWorld" object:self];
     [_node removeFromParentNode];
 }
 
