@@ -32,12 +32,15 @@ NSNotificationName const GameOverNotification = @"GameOver";;
     NSMutableArray<Block *> *_comboBlocks;
     NSCountedSet<UIColor *> *_worldColors;
     NSTimer __weak *_comboTimer, __weak *_levelTimer;
+    NSDate *_comboDate, *_levelDate;
+    NSTimeInterval _levelElapsedTime, _comboElapsedTime;
     Block __weak *_worldBlocks[WORLD_SIZE][WORLD_SIZE][WORLD_SIZE];
     simd_float3 _worldMin, _worldMax;
     NSUInteger _blockCount, _colorQueueHead, _colorQueueTail, _comboCount;
     float _levelTime;
     NSMutableArray<UIColor *> *_colorQueue;
     SCNNode *_worldNode;
+    UIColor *_comboColor;
 }
 
 - (instancetype)initWithWorldNode:(SCNNode *)node
@@ -48,7 +51,6 @@ NSNotificationName const GameOverNotification = @"GameOver";;
     _comboBlocks = [NSMutableArray arrayWithCapacity:MAX_COMBO];
     _worldColors = [[NSCountedSet alloc] initWithCapacity:MAX_COLORS_IN_WORLD];
     _comboColor = [UIColor whiteColor];
-    _comboTimer = nil;
     _colorQueueHead = 0;
     _colorQueueTail = 0;
     _blockCount = 0;
@@ -65,6 +67,13 @@ NSNotificationName const GameOverNotification = @"GameOver";;
     void (^action)(NSTimer *) = ^(NSTimer *timer) {[gameNotificationCenter postNotificationName:GameOverNotification object:self];};
     _levelTimer = [NSTimer scheduledTimerWithTimeInterval:_levelTime + MIN_LEVEL_DURATION repeats:NO block:action];
     _comboTimer = nil;
+    _levelDate = [NSDate date];
+    _comboDate = nil;
+    _levelElapsedTime = 0.0;
+    _comboElapsedTime = 0.0;
+    _paused = NO;
+    _comboColor = [UIColor whiteColor];
+    [gameNotificationCenter postNotificationName:GameShouldChangeBackgroundColorNotification object:self userInfo:@{@"Color": [UIColor whiteColor]}];
     [gameNotificationCenter addObserver:self selector:@selector(safeToFillWorld:) name:BlockSafeToFillWorldNotification object:nil];
     return self;
 }
@@ -135,6 +144,7 @@ NSNotificationName const GameOverNotification = @"GameOver";;
             comboBlock.lit = NO;
         [_comboBlocks removeAllObjects];
         [_comboTimer invalidate];
+        _comboDate = nil;
                                                                                               _comboColor = [UIColor whiteColor];
         [gameNotificationCenter postNotificationName:GameShouldChangeBackgroundColorNotification object:self userInfo:@{@"Color": _comboColor}];
         return;
@@ -146,10 +156,9 @@ NSNotificationName const GameOverNotification = @"GameOver";;
     if (!_comboTimer)
         [_comboTimer invalidate];
     _comboTimer = [NSTimer scheduledTimerWithTimeInterval:0.5 target:self selector:@selector(comboTimeout:) userInfo:nil repeats:NO];
-    if (_comboBlocks.count == [_worldColors countForObject:_comboColor]) {
-        [_comboTimer invalidate];
-        [self comboTimeout:nil];
-    }
+    _comboDate = [NSDate date];
+    if (_comboBlocks.count == [_worldColors countForObject:_comboColor])
+        [_comboTimer fire];
 }
 
 - (void)comboTimeout:(NSTimer *)timer
@@ -169,6 +178,7 @@ NSNotificationName const GameOverNotification = @"GameOver";;
     }
     _comboColor = [UIColor whiteColor];
     [gameNotificationCenter postNotificationName:GameShouldChangeBackgroundColorNotification object:self userInfo:@{@"Color": _comboColor}];
+    _comboDate = nil;
 }
 
 - (void)addBlockWithColor:(UIColor *)color
@@ -366,15 +376,36 @@ NSNotificationName const GameOverNotification = @"GameOver";;
 - (void)levelUp
 {
     _comboCount = 0;
-    _levelTime *= 0.8;
+    _levelTime *= 0.9;
     [_levelTimer invalidate];
     void (^action)(NSTimer *) = ^(NSTimer *timer) {[gameNotificationCenter postNotificationName:GameOverNotification object:self];};
     _levelTimer = [NSTimer scheduledTimerWithTimeInterval:_levelTime + MIN_LEVEL_DURATION repeats:NO block:action];
+    _levelDate = [NSDate date];
 }
 
 - (void)safeToFillWorld:(NSNotification *)notification
 {
     [self fillWorld];
+}
+
+- (void)setPaused:(BOOL) paused
+{
+    if (!_paused && paused) {
+        _levelElapsedTime = - [_levelDate timeIntervalSinceNow];
+        [_levelTimer invalidate];
+        if (_comboDate) {
+            _comboElapsedTime = - [_comboDate timeIntervalSinceNow];
+            [_comboTimer invalidate];
+        }
+    } else if (_paused && !paused) {
+        _levelDate = [NSDate dateWithTimeIntervalSinceNow:- _levelElapsedTime];
+        void (^actions)(NSTimer *) = ^(NSTimer *timer) {[gameNotificationCenter postNotificationName:GameOverNotification object:self];};
+        _levelTimer = [NSTimer scheduledTimerWithTimeInterval:_levelTime + MIN_LEVEL_DURATION - _levelElapsedTime repeats:NO block:actions];
+        if (_comboDate) {
+            _comboDate = [NSDate dateWithTimeIntervalSinceNow:- _comboElapsedTime];
+            _comboTimer = [NSTimer timerWithTimeInterval:0.5 - _comboElapsedTime target:self selector:@selector(comboTimeout:) userInfo:nil repeats:NO];
+        }
+    }
 }
 
 @end

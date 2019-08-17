@@ -10,4 +10,6 @@
 
 @interface GameViewController : UIViewController
 
+@property (nonatomic) BOOL paused;
+
 @end

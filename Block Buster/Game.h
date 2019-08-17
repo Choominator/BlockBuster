@@ -16,7 +16,7 @@ extern  NSNotificationName const GameOverNotification;
 
 @interface Game : NSObject
 
-@property (nonatomic, readonly) UIColor *comboColor;
+@property (nonatomic) BOOL paused;
 
 + (instancetype)gameWithWorldNode:(SCNNode *)node;
 - (void)tapNode:(SCNNode *)node;
