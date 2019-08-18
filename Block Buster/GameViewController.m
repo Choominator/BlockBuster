@@ -139,24 +139,12 @@ extern NSNotificationCenter *gameNotificationCenter;
             point.y = size.height - point.y - size.height / 2.0;
             SKNode *node = [_renderer.overlaySKScene nodeAtPoint:point];
             if (node == _playLabel) {
-                void(^actions)(void) = ^{
-                    if (!self->_game)
-                        [self startGame];
-                    else
-                        self.paused = NO;
-                };
-                [_playLabel runAction:_fadeOutAction completion:actions];
-                _ignoreTaps = YES;
+                [self startGame];
             } else if (node == _gameOverLabel) {
-                void (^actions)(void) = ^{[self displayScore];};
-                [_gameOverLabel runAction:_fadeOutAction completion:actions];
-                _ignoreTaps = YES;
+                [self displayScore];
             } else if (node == _scoreLabel) {
-                void (^actions)(void) = ^{[self resetGame];};
-                [_scoreLabel runAction:_fadeOutAction completion:actions];
-                _ignoreTaps = YES;
+                [self resetGame];
             } else if (node == _pauseLabel) {
-                if (!_game) return;
                 if (_paused)
                     [self resetGame];
                 else
@@ -272,8 +260,12 @@ extern NSNotificationCenter *gameNotificationCenter;
 - (void)gameOver:(NSNotification *)notification
 {
     _game = nil;
-    void (^completion)(void) = ^{self->_pauseLabel.hidden = YES;};
+    void (^completion)(void) = ^{
+        self->_pauseLabel.hidden = YES;
+        self->_ignoreTaps = NO;
+    };
     [_pauseLabel runAction:_fadeOutAction completion:completion];
+    _ignoreTaps = YES;
     _gameOverLabel.hidden = NO;
     [_gameOverLabel runAction:_fadeInAction];
     _renderer.playing = NO;
@@ -281,24 +273,43 @@ extern NSNotificationCenter *gameNotificationCenter;
 
 - (void)displayScore
 {
-    _scoreLabel.text = [[NSString alloc] initWithFormat:@"%lu", (unsigned long) _score];
-    _scoreLabel.hidden = NO;
-    [_scoreLabel runAction:_fadeInAction];
-    _ignoreTaps = NO;
+    void (^completion)(void) = ^{
+        self->_scoreLabel.text = [[NSString alloc] initWithFormat:@"%lu", (unsigned long) self->_score];
+        self->_scoreLabel.hidden = NO;
+        [self->_scoreLabel runAction:self->_fadeInAction];
+        self->_ignoreTaps = NO;
+    };
+    [_gameOverLabel runAction:_fadeOutAction completion:completion];
+    _ignoreTaps = YES;
 }
 
 - (void)resetGame
 {
     _score = 0;
-    _game = nil;
-    void (^completion)(void) = ^{self->_pauseLabel.hidden = YES;};
-    [_pauseLabel runAction:_fadeOutAction completion:completion];
-    if (_playLabel.hidden) {
-        _playLabel.hidden = NO;
-        [_playLabel runAction:_fadeInAction];
+    if (!_game) {
+        if (!_scoreLabel.hidden) {
+            void (^completion)(void) = ^{
+                self->_scoreLabel.hidden = YES;
+                self->_ignoreTaps = NO;
+                [self->_playLabel runAction:self->_fadeInAction];
+            };
+            [_scoreLabel runAction:_fadeOutAction completion:completion];
+            _ignoreTaps = YES;
+        } else
+            [_playLabel runAction:_fadeInAction];
+    } else {
+        _game = nil;
+        _renderer.playing = NO;
+        _paused = NO;
+        _cameraLight.color = [UIColor whiteColor];
+        void (^completion)(void) = ^{
+            self->_pauseLabel.hidden = YES;
+            self->_ignoreTaps = NO;
+            [self->_playLabel runAction:self->_fadeInAction];
+        };
+        [_pauseLabel runAction:_fadeOutAction completion:completion];
+        _ignoreTaps = YES;
     }
-    _ignoreTaps = NO;
-    self.paused = NO;
 }
 
 - (void)startGame
@@ -316,7 +327,6 @@ extern NSNotificationCenter *gameNotificationCenter;
         [_pauseLabel runAction:_fadeInAction];
         _pauseLabel.text = @"⏸";
     }
-    _paused = NO;
 }
 
 - (void)setPaused:(BOOL) paused
