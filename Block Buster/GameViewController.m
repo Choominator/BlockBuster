@@ -295,7 +295,7 @@ extern NSNotificationCenter *gameNotificationCenter;
             [_scoreLabel runAction:_fadeOutAction completion:completion];
             _ignoreTaps = YES;
         } else
-            [_playLabel runAction:_fadeInAction];
+            _playLabel.hidden = NO;
     } else {
         _game = nil;
         _renderer.playing = NO;
