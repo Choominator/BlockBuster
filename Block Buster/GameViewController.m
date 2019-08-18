@@ -132,24 +132,23 @@ extern NSNotificationCenter *gameNotificationCenter;
             if (!results.count) return;
             for (SCNHitTestResult *result in results)
                 [_game tapNode:result.node];
-        } else {
-            if (_ignoreTaps) return;
-            CGSize size = self.view.bounds.size;
-            point.x -= size.width / 2.0;
-            point.y = size.height - point.y - size.height / 2.0;
-            SKNode *node = [_renderer.overlaySKScene nodeAtPoint:point];
-            if (node == _playLabel) {
-                [self startGame];
-            } else if (node == _gameOverLabel) {
-                [self displayScore];
-            } else if (node == _scoreLabel) {
+        }
+        if (_ignoreTaps) return;
+        CGSize size = self.view.bounds.size;
+        point.x -= size.width / 2.0;
+        point.y = size.height - point.y - size.height / 2.0;
+        SKNode *node = [_renderer.overlaySKScene nodeAtPoint:point];
+        if (node == _playLabel) {
+            [self startGame];
+        } else if (node == _gameOverLabel) {
+            [self displayScore];
+        } else if (node == _scoreLabel) {
+            [self resetGame];
+        } else if (node == _pauseLabel) {
+            if (_paused)
                 [self resetGame];
-            } else if (node == _pauseLabel) {
-                if (_paused)
-                    [self resetGame];
-                else
-                    self.paused = YES;
-            }
+            else
+                self.paused = YES;
         }
     }
 }
