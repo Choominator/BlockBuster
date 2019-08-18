@@ -294,6 +294,7 @@ extern NSNotificationCenter *gameNotificationCenter;
                 self->_scoreLabel.hidden = YES;
                 self->_ignoreTaps = NO;
                 [self->_playLabel runAction:self->_fadeInAction];
+                self->_playLabel.hidden = NO;
             };
             [_scoreLabel runAction:_fadeOutAction completion:completion];
             _ignoreTaps = YES;
@@ -307,7 +308,6 @@ extern NSNotificationCenter *gameNotificationCenter;
         void (^completion)(void) = ^{
             self->_pauseLabel.hidden = YES;
             self->_ignoreTaps = NO;
-            [self->_playLabel runAction:self->_fadeInAction];
         };
         [_pauseLabel runAction:_fadeOutAction completion:completion];
         _ignoreTaps = YES;
