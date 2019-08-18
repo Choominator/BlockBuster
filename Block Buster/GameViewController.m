@@ -129,9 +129,9 @@ extern NSNotificationCenter *gameNotificationCenter;
         CGPoint point = [tapGestureRecognizer locationOfTouch:touch inView:self.view];
         if (_game && !_paused) {
             NSArray<SCNHitTestResult *> *results = [_renderer hitTest:point options:@{SCNHitTestBoundingBoxOnlyKey: @(YES), SCNHitTestOptionFirstFoundOnly: @(YES)}];
-            if (!results.count) return;
-            for (SCNHitTestResult *result in results)
-                [_game tapNode:result.node];
+            if (results.count)
+                for (SCNHitTestResult *result in results)
+                    [_game tapNode:result.node];
         }
         if (_ignoreTaps) return;
         CGSize size = self.view.bounds.size;
@@ -139,7 +139,10 @@ extern NSNotificationCenter *gameNotificationCenter;
         point.y = size.height - point.y - size.height / 2.0;
         SKNode *node = [_renderer.overlaySKScene nodeAtPoint:point];
         if (node == _playLabel) {
-            [self startGame];
+            if (!_paused)
+                [self startGame];
+            else
+                self.paused = NO;
         } else if (node == _gameOverLabel) {
             [self displayScore];
         } else if (node == _scoreLabel) {
@@ -321,11 +324,9 @@ extern NSNotificationCenter *gameNotificationCenter;
     };
     [_playLabel runAction:_fadeOutAction completion:completion];
     _ignoreTaps = YES;
-    if (_pauseLabel.hidden) {
-        _pauseLabel.hidden = NO;
-        [_pauseLabel runAction:_fadeInAction];
-        _pauseLabel.text = @"⏸";
-    }
+    _pauseLabel.hidden = NO;
+    [_pauseLabel runAction:_fadeInAction];
+    _pauseLabel.text = @"⏸";
 }
 
 - (void)setPaused:(BOOL) paused

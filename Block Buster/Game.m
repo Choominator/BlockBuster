@@ -391,6 +391,7 @@ NSNotificationName const GameOverNotification = @"GameOver";;
 - (void)setPaused:(BOOL) paused
 {
     if (!_paused && paused) {
+        _paused = YES;
         _levelElapsedTime = - [_levelDate timeIntervalSinceNow];
         [_levelTimer invalidate];
         if (_comboDate) {
@@ -398,11 +399,12 @@ NSNotificationName const GameOverNotification = @"GameOver";;
             [_comboTimer invalidate];
         }
     } else if (_paused && !paused) {
-        _levelDate = [NSDate dateWithTimeIntervalSinceNow:- (_levelTime + MIN_LEVEL_DURATION - _levelElapsedTime)];
+        _paused = NO;
+        _levelDate = [NSDate dateWithTimeIntervalSinceNow:- _levelElapsedTime];
         void (^actions)(NSTimer *) = ^(NSTimer *timer) {[gameNotificationCenter postNotificationName:GameOverNotification object:self];};
         _levelTimer = [NSTimer scheduledTimerWithTimeInterval:_levelTime + MIN_LEVEL_DURATION - _levelElapsedTime repeats:NO block:actions];
         if (_comboDate) {
-            _comboDate = [NSDate dateWithTimeIntervalSinceNow:- (0.5 - _comboElapsedTime)];
+            _comboDate = [NSDate dateWithTimeIntervalSinceNow:- _comboElapsedTime];
             _comboTimer = [NSTimer timerWithTimeInterval:0.5 - _comboElapsedTime target:self selector:@selector(comboTimeout:) userInfo:nil repeats:NO];
         }
     }
