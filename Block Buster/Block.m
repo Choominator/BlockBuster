@@ -6,6 +6,8 @@
 //  Copyright © 2019 Joao Santos. All rights reserved.
 //
 
+@import GameplayKit;
+
 #import <objc/runtime.h>
 #import "Block.h"
 
@@ -45,6 +47,12 @@ static NSMutableSet<Block *> *blockSet, *deadBlockSet;
     if (!deadBlockSet)
         deadBlockSet = [NSMutableSet new];
     [world addChildNode:block->_node];
+    GKRandomSource *randomSource = [GKRandomSource sharedRandom];
+    switch ([randomSource nextIntWithUpperBound:3]) {
+        case 0: break;
+        case 1: block->_node.simdOrientation = simd_quaternion(M_PI / 2.0, simd_make_float3(1.0, 0.0, 0.0)); break;
+        case 2: block->_node.simdOrientation = simd_quaternion(M_PI / 2.0, simd_make_float3(0.0, 1.0, 0.0)); break;
+    }
     SCNAnimation *animation = [block setupCreation];
     [block->_node addAnimation:animation forKey:nil];
     block->_alive = YES;
@@ -118,8 +126,11 @@ static NSMutableSet<Block *> *blockSet, *deadBlockSet;
         unlitMaterials = [NSMutableDictionary new];
     NSArray<SCNMaterial *> *materials = unlitMaterials[_color];
     if (materials) return materials;
-    SCNMaterial *material = [self commonMaterial];
-    materials = @[material];
+    SCNMaterial *coloredMaterial = [self commonMaterial];
+    coloredMaterial.diffuse.contents = [self diffuseImage];
+    SCNMaterial *blackMaterial = [self commonMaterial];
+    blackMaterial.diffuse.contents = [UIColor blackColor];
+    materials = @[coloredMaterial, blackMaterial, coloredMaterial, blackMaterial, blackMaterial, blackMaterial];
     unlitMaterials[_color] = materials;
     _unlitMaterials = materials;
     return materials;
@@ -131,12 +142,16 @@ static NSMutableSet<Block *> *blockSet, *deadBlockSet;
         litMaterials = [NSMutableDictionary new];
     NSArray<SCNMaterial *> *materials = litMaterials[_color];
     if (materials) return materials;
-    SCNMaterial *material = [self commonMaterial];
-    SCNMaterialProperty *property = material.emission;
+    SCNMaterial *coloredMaterial = [self commonMaterial];
+    coloredMaterial.diffuse.contents = [self diffuseImage];
+    SCNMaterialProperty *property = coloredMaterial.emission;
     property.contents = [self emissionImage];
 property.minificationFilter = SCNFilterModeNearest;
     property.magnificationFilter = SCNFilterModeNearest;
-    materials = @[material];
+    SCNMaterial *blackMaterial = [self commonMaterial];
+    blackMaterial.diffuse.contents = [UIColor blackColor];
+    blackMaterial.emission.contents = [UIColor blackColor];
+    materials = @[coloredMaterial, blackMaterial, coloredMaterial, blackMaterial, blackMaterial, blackMaterial];
     litMaterials[_color] = materials;
     _litMaterials = materials;
     return materials;
@@ -147,7 +162,6 @@ property.minificationFilter = SCNFilterModeNearest;
     SCNMaterial *material = [SCNMaterial material];
     material.lightingModelName = SCNLightingModelPhong;
     SCNMaterialProperty *property = material.diffuse;
-    property.contents = [self diffuseImage];
     property.minificationFilter = SCNFilterModeNearest;
     property.magnificationFilter = SCNFilterModeNearest;
     material.specular.contents = [UIColor whiteColor];

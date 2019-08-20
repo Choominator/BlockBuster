@@ -50,7 +50,6 @@ NSNotificationName const GameOverNotification = @"GameOver";;
     _worldNode = node;
     _comboBlocks = [NSMutableArray arrayWithCapacity:MAX_COMBO];
     _worldColors = [[NSCountedSet alloc] initWithCapacity:MAX_COLORS_IN_WORLD];
-    _comboColor = [UIColor whiteColor];
     _colorQueueHead = 0;
     _colorQueueTail = 0;
     _blockCount = 0;
@@ -253,8 +252,8 @@ NSNotificationName const GameOverNotification = @"GameOver";;
 
 - (void)updateTransform
 {
-    simd_float3 worldMin = simd_make_float3(0.0, 0.0, 0.0);
-    simd_float3 worldMax = simd_make_float3(0.0, 0.0, 0.0);
+    simd_float3 worldMin = simd_make_float3(WORLD_SIZE / 2.0, WORLD_SIZE / 2.0, WORLD_SIZE / 2.0);
+    simd_float3 worldMax = simd_make_float3(-WORLD_SIZE / 2.0, -WORLD_SIZE / 2.0, -WORLD_SIZE / 2.0);
     NSSet<Block *> *blocks = [Block blockSet];;
     for (Block *block in blocks) {
         simd_float3 position = block.position;
