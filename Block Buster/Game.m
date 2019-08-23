@@ -34,8 +34,6 @@ NSNotificationName const GameOverNotification = @"GameOver";;
     NSTimer __weak *_comboTimer, __weak *_levelTimer;
     NSDate *_comboDate, *_levelDate;
     NSTimeInterval _levelElapsedTime, _comboElapsedTime;
-    Block __weak *_worldBlocks[WORLD_SIZE][WORLD_SIZE][WORLD_SIZE];
-    simd_float3 _worldMin, _worldMax;
     NSUInteger _blockCount, _colorQueueHead, _colorQueueTail, _comboCount;
     float _levelTime;
     NSMutableArray<UIColor *> *_colorQueue;
@@ -50,11 +48,7 @@ NSNotificationName const GameOverNotification = @"GameOver";;
     _worldNode = node;
     _comboBlocks = [NSMutableArray arrayWithCapacity:MAX_COMBO];
     _worldColors = [[NSCountedSet alloc] initWithCapacity:MAX_COLORS_IN_WORLD];
-    _colorQueueHead = 0;
-    _colorQueueTail = 0;
-    _blockCount = 0;
     _levelTime = MAX_LEVEL_DURATION - MIN_LEVEL_DURATION;
-    _comboCount = 0;
     GKRandomSource *randomSource = [GKRandomSource sharedRandom];
     NSArray *colors = [randomSource arrayByShufflingObjectsInArray:COLORS];
     _colorQueue = [NSMutableArray arrayWithArray:colors];
@@ -64,19 +58,10 @@ NSNotificationName const GameOverNotification = @"GameOver";;
     simd_float3 axis = simd_make_float3(- direction[1], direction[0], 0.0);
     angle = [randomSource nextUniform] * M_PI * 2.0 - M_PI;
     _worldNode.simdWorldOrientation = simd_quaternion(angle, axis);
-    for (NSUInteger x = 0; x < WORLD_SIZE; ++ x)
-        for (NSUInteger y = 0; y < WORLD_SIZE; ++ y)
-            for (NSUInteger z = 0; z < WORLD_SIZE; ++ z)
-                _worldBlocks[x][y][z] = nil;
     [self fillWorld];
     void (^action)(NSTimer *) = ^(NSTimer *timer) {[gameNotificationCenter postNotificationName:GameOverNotification object:self];};
     _levelTimer = [NSTimer scheduledTimerWithTimeInterval:_levelTime + MIN_LEVEL_DURATION repeats:NO block:action];
-    _comboTimer = nil;
     _levelDate = [NSDate date];
-    _comboDate = nil;
-    _levelElapsedTime = 0.0;
-    _comboElapsedTime = 0.0;
-    _paused = NO;
     _comboColor = [UIColor whiteColor];
     [gameNotificationCenter postNotificationName:GameShouldChangeBackgroundColorNotification object:self userInfo:@{@"Color": [UIColor whiteColor]}];
     [gameNotificationCenter addObserver:self selector:@selector(safeToFillWorld:) name:BlockSafeToFillWorldNotification object:nil];
@@ -85,9 +70,7 @@ NSNotificationName const GameOverNotification = @"GameOver";;
 
 - (void)dealloc
 {
-    NSArray<Block *> *allBlocks= [[Block blockSet] allObjects];
-    for (Block *block in allBlocks)
-        [self removeBlock:block];
+    [Block reset];
     if (_comboTimer)
         [_comboTimer invalidate];
     if (_levelTimer)
@@ -189,23 +172,20 @@ NSNotificationName const GameOverNotification = @"GameOver";;
 - (void)addBlockWithColor:(UIColor *)color
 {
     NSMutableArray<NSValue *> *availablePositions = [NSMutableArray arrayWithCapacity:WORLD_SIZE * WORLD_SIZE * WORLD_SIZE];
-    for (NSUInteger x = 0; x < WORLD_SIZE; ++ x) {
-        for (NSUInteger y = 0; y < WORLD_SIZE; ++ y) {
-            for (NSUInteger z = 0; z < WORLD_SIZE; ++ z) {
-                if (!_worldBlocks[x][y][z]) {
-                    NSValue *value = [NSValue valueWithSCNVector3:SCNVector3Make(x - WORLD_SIZE / 2.0 + 0.5, y - WORLD_SIZE / 2.0 + 0.5, z - WORLD_SIZE / 2.0 + 0.5)];
-                    [availablePositions addObject:value];
-                }
+    for (float x = - WORLD_SIZE / 2.0 + 0.5; x <= WORLD_SIZE / 2.0 - 1.5; x += 1.0) {
+        for (float y = - WORLD_SIZE / 2.0 + 0.5; y <= WORLD_SIZE / 2.0 - 0.5; y += 1.0) {
+            for (float z = - WORLD_SIZE / 2.0 + 0.5; z <= WORLD_SIZE / 2.0 - 0.5; z += 1.0) {
+                simd_float3 position = simd_make_float3(x, y, z);
+                if ([Block queryPosition:position]) continue;
+                NSValue *value = [NSValue valueWithSCNVector3:SCNVector3Make(x, y, z)];
+                [availablePositions addObject:value];
             }
         }
     }
     GKRandomSource *randomSource = [GKRandomSource sharedRandom];
     NSUInteger choice = [randomSource nextIntWithUpperBound:availablePositions.count];
     SCNVector3 position = availablePositions[choice].SCNVector3Value;
-    NSUInteger x = position.x + WORLD_SIZE / 2.0 - 0.5;
-    NSUInteger y = position.y + WORLD_SIZE / 2.0 - 0.5;;
-    NSUInteger z = position.z + WORLD_SIZE / 2.0 - 0.5;
-    _worldBlocks[x][y][z] = [Block createBlockWithColor:color inWorld:_worldNode atPosition:SCNVector3ToFloat3(position)];
+    [Block createBlockWithColor:color inWorld:_worldNode atPosition:SCNVector3ToFloat3(position)];
     [_worldColors addObject:color];
     ++ _blockCount;
 }
@@ -216,14 +196,9 @@ NSNotificationName const GameOverNotification = @"GameOver";;
     [_worldColors removeObject:color];
     if (![_worldColors countForObject:color]) {
         _colorQueue[_colorQueueTail] = color;
-        _colorQueueTail = (_colorQueueTail + 1) % 5;
+        _colorQueueTail = (_colorQueueTail + 1) % _colorQueue.count;
     }
     -- _blockCount;
-    simd_float3 position = block.position;
-    NSUInteger x = position[0] + WORLD_SIZE / 2.0 - 0.5;
-    NSUInteger y = position[1] + WORLD_SIZE / 2.0 - 0.5;;
-    NSUInteger z = position[2] + WORLD_SIZE / 2.0 - 0.5;
-    _worldBlocks[x][y][z] = nil;
     [Block dismissBlock:block];
 }
 
@@ -305,12 +280,8 @@ NSNotificationName const GameOverNotification = @"GameOver";;
 
 - (void)blocksConnectedToPosition:(simd_float3)position addToSet:(NSMutableSet<Block *> *)set
 {
-    NSUInteger x = position[0] + WORLD_SIZE / 2.0 - 0.5;
-    NSUInteger y = position[1] + WORLD_SIZE / 2.0 - 0.5;
-    NSUInteger z = position[2] + WORLD_SIZE / 2.0 - 0.5;
-    if (x > WORLD_SIZE - 1 || x < 0 || y > WORLD_SIZE - 1 || y < 0 || z > WORLD_SIZE - 1 || z < 0) return;
-    if (!_worldBlocks[x][y][z]) return;
-    Block *block = _worldBlocks[x][y][z];
+    Block *block = [Block queryPosition:position];
+    if (!block) return;
     if ([set containsObject:block]) return;
     [set addObject:block];
     [self blocksConnectedToPosition:simd_make_float3(position[0] - 1.0, position[1], position[2]) addToSet:set];
@@ -357,25 +328,7 @@ NSNotificationName const GameOverNotification = @"GameOver";;
         value = adjacentPositions[0];
     SCNVector3 position = value.SCNVector3Value;
     simd_float3 simdPosition = SCNVector3ToFloat3(position);
-    [self moveBlock:scatteredBlock toPosition:simdPosition];
-}
-
-- (void)moveBlock:(Block *)block toPosition:(simd_float3)newPosition
-{
-    simd_float3 oldPosition = block.position;
-    if (simd_equal(oldPosition, newPosition)) return;
-    NSUInteger oldX = oldPosition[0] + WORLD_SIZE / 2.0 - 0.5;
-    NSUInteger oldY = oldPosition[1] + WORLD_SIZE / 2.0 - 0.5;
-    NSUInteger oldZ = oldPosition[2] + WORLD_SIZE / 2.0 - 0.5;
-    assert(_worldBlocks[oldX][oldY][oldZ]);
-    assert(_worldBlocks[oldX][oldY][oldZ] == block);
-    NSUInteger newX = newPosition[0] + WORLD_SIZE / 2.0 - 0.5;
-    NSUInteger newY = newPosition[1] + WORLD_SIZE / 2.0 - 0.5;
-    NSUInteger newZ = newPosition[2] + WORLD_SIZE / 2.0 - 0.5;
-    assert(!_worldBlocks[newX][newY][newZ]);
-    _worldBlocks[newX][newY][newZ] = block;
-    _worldBlocks[oldX][oldY][oldZ] = nil;
-    block.position = newPosition;
+    scatteredBlock.position = simdPosition;
 }
 
 - (void)levelUp

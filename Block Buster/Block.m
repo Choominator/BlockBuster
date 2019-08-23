@@ -11,14 +11,16 @@
 #import <objc/runtime.h>
 #import "Block.h"
 
+#define WORLD_SIZE 3
+
 NSNotificationName const BlockSafeToFillWorldNotification = @"BlockSafeToFillWorld";
 extern NSNotificationCenter *gameNotificationCenter;
 static SCNGeometry *commonGeometry;
-static NSMutableDictionary<UIColor *, NSArray<SCNMaterial *> *> *unlitMaterials;
-static NSMutableDictionary<UIColor *, NSArray<SCNMaterial *> *> *litMaterials;
+static NSMutableDictionary<UIColor *, NSArray<SCNMaterial *> *> *unlitMaterials, *litMaterials;
 static NSMutableDictionary<UIColor *, UIImage *> *emissionImages;
 static NSMutableDictionary<UIColor *, UIImage *> *diffuseImages;
-static NSMutableSet<Block *> *blockSet, *deadBlockSet;
+static NSMutableDictionary<NSValue *, Block *> *blockPositions;
+NSUInteger deadBlockCount;
 
 @implementation Block {
     NSArray<SCNMaterial *> *_litMaterials, *_unlitMaterials;
@@ -31,6 +33,7 @@ static NSMutableSet<Block *> *blockSet, *deadBlockSet;
     if (!self) return nil;
     _color = color;
     _position = position;
+    _alive = YES;
     _node = [SCNNode node];
     _node.geometry = [self setupGeometry];
     _node.simdPosition = position;
@@ -38,14 +41,14 @@ static NSMutableSet<Block *> *blockSet, *deadBlockSet;
     return self;
 }
 
-+ (instancetype)createBlockWithColor:(UIColor *) color inWorld:(SCNNode *)world atPosition:(simd_float3)position
++ (void)createBlockWithColor:(UIColor *) color inWorld:(SCNNode *)world atPosition:(simd_float3)position
 {
     Block *block = [[Block alloc] initWithColor:color inWorld:world atPosition:position];
-    if (!blockSet)
-        blockSet = [NSMutableSet new];
-    [blockSet addObject:block];
-    if (!deadBlockSet)
-        deadBlockSet = [NSMutableSet new];
+    if (!blockPositions)
+        blockPositions = [NSMutableDictionary dictionaryWithCapacity:WORLD_SIZE * WORLD_SIZE * WORLD_SIZE];
+    NSValue *value = [NSValue valueWithSCNVector3:SCNVector3FromFloat3(position)];
+    assert(!blockPositions[value]);
+    blockPositions[value] = block;
     [world addChildNode:block->_node];
     GKRandomSource *randomSource = [GKRandomSource sharedRandom];
     switch ([randomSource nextIntWithUpperBound:3]) {
@@ -55,18 +58,18 @@ static NSMutableSet<Block *> *blockSet, *deadBlockSet;
     }
     SCNAnimation *animation = [block setupCreation];
     [block->_node addAnimation:animation forKey:nil];
-    block->_alive = YES;
-    return block;
 }
 
 + (void)dismissBlock:(Block *)block
 {
+    ++ deadBlockCount;
     block->_alive = NO;
-    [deadBlockSet addObject:block];
-    [blockSet removeObject:block];
     SCNAnimationDidStopBlock animationActions = ^(SCNAnimation *animation, id<SCNAnimatable> receiver, BOOL completed) {
         block->_node.geometry = nil;
-        [deadBlockSet removeObject:block];
+        -- deadBlockCount;
+        SCNVector3 position = SCNVector3FromFloat3(block->_position);
+        NSValue *value = [NSValue valueWithSCNVector3:position];
+        blockPositions[value] = nil;
     };
     SCNAnimation *animation = [block setupDestruction];
     animation.animationDidStop = animationActions;
@@ -78,14 +81,35 @@ static NSMutableSet<Block *> *blockSet, *deadBlockSet;
     return objc_getAssociatedObject(node, (__bridge void *) node);
 }
 
++ (void)reset
+{
+    deadBlockCount = 0;
+    [blockPositions removeAllObjects];
+}
+
 + (NSSet<Block *> *)blockSet;
 {
+    NSArray<Block *> *blockArray = [blockPositions allValues];
+    NSSet<Block *> *blockSet = [NSSet setWithArray:blockArray];
     return blockSet;
+}
+
++ (NSSet<NSValue *> *)positionSet
+   {
+       NSArray<NSValue *> *blockPositionArray = [blockPositions allKeys];
+       NSSet<NSValue *> *blockPositionSet = [NSSet setWithArray:blockPositionArray];
+       return blockPositionSet;
+   }
+
++ (Block *)queryPosition:(simd_float3)position
+{
+    NSValue *value = [NSValue valueWithSCNVector3:SCNVector3FromFloat3(position)];
+    return blockPositions[value];
 }
 
 - (void)dealloc
 {
-        if (!deadBlockSet.count)
+        if (!deadBlockCount)
             [gameNotificationCenter postNotificationName:BlockSafeToFillWorldNotification object:self];
     [_node removeFromParentNode];
 }
@@ -101,6 +125,15 @@ static NSMutableSet<Block *> *blockSet, *deadBlockSet;
 
 - (void)setPosition:(simd_float3)position
 {
+    if (simd_equal(position, _position)) return;
+    SCNVector3 oldPosition = SCNVector3FromFloat3(_position);
+    SCNVector3 newPosition = SCNVector3FromFloat3(position);
+    NSValue *oldValue = [NSValue valueWithSCNVector3:oldPosition];
+    assert(blockPositions[oldValue]);
+    NSValue *newValue = [NSValue valueWithSCNVector3:newPosition];
+    assert(!blockPositions[newValue]);
+    blockPositions[newValue] = blockPositions[oldValue];
+    blockPositions[oldValue] = nil;
     _position = position;
     [SCNTransaction begin];
     [SCNTransaction setAnimationDuration:0.5];
