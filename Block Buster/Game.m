@@ -31,7 +31,7 @@ NSNotificationName const GameOverNotification = @"GameOver";;
 @implementation Game {
     NSMutableArray<Block *> *_comboBlocks;
     NSCountedSet<UIColor *> *_worldColors;
-    NSTimer __weak *_comboTimer, __weak *_levelTimer;
+    NSTimer __weak *_comboTimer, __weak *_levelTimer, __weak *_gatherTimer;
     NSDate *_comboDate, *_levelDate;
     NSTimeInterval _levelElapsedTime, _comboElapsedTime;
     NSUInteger _blockCount, _colorQueueHead, _colorQueueTail, _comboCount;
@@ -111,7 +111,10 @@ NSNotificationName const GameOverNotification = @"GameOver";;
     NSArray<UIColor *> *shuffledColors = [randomSource arrayByShufflingObjectsInArray:optionalColors];
     for (NSUInteger index = 0; _blockCount < MAX_BLOCKS_IN_WORLD; ++ index)
         [self addBlockWithColor:shuffledColors[index]];
-    [self gatherUp];
+    if (_gatherTimer)
+        [_gatherTimer invalidate];
+    void(^action)(NSTimer *) = ^(NSTimer *timer) {[self gatherUp];};
+    _gatherTimer = [NSTimer scheduledTimerWithTimeInterval:0.5 repeats:NO block:action];
 }
 
 - (void)comboWithBlock:(Block *)block
@@ -356,6 +359,8 @@ NSNotificationName const GameOverNotification = @"GameOver";;
             _comboElapsedTime = - [_comboDate timeIntervalSinceNow];
             [_comboTimer invalidate];
         }
+        if (_gatherTimer)
+            [_gatherTimer fire];
     } else if (_paused && !paused) {
         _paused = NO;
         _levelDate = [NSDate dateWithTimeIntervalSinceNow:- _levelElapsedTime];
