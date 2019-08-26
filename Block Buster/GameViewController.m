@@ -368,17 +368,18 @@ extern NSNotificationCenter *gameNotificationCenter;
     if (_pieShape)
         [_pieShape removeFromParent];
     if (uniform == 1.0 || uniform == 0.0) return;
-    CGFloat radius = _size.width * 0.2;
+    CGFloat radius = _size.width * 0.1;
     CGFloat startAngle = M_PI / 2.0;
-    CGFloat endAngle = fmod(M_PI / 2.0 - uniform * M_PI * 2.0, M_PI * 2.0);
+    CGFloat endAngle = fmod(M_PI / 2.0 + uniform * M_PI * 2.0, M_PI * 2.0);
     UIBezierPath NS_VALID_UNTIL_END_OF_SCOPE *bezierPath = [UIBezierPath bezierPath];
-    [bezierPath addArcWithCenter:CGPointZero radius:radius startAngle:startAngle endAngle:endAngle clockwise:YES];
+    [bezierPath addArcWithCenter:CGPointZero radius:radius startAngle:startAngle endAngle:endAngle clockwise:NO];
     [bezierPath addLineToPoint:CGPointZero];
     [bezierPath closePath];
     CGPathRef path = [bezierPath CGPath];
     _pieShape = [SKShapeNode shapeNodeWithPath:path centered:YES];
     _pieShape.fillColor = [UIColor whiteColor];
     _pieShape.position = CGPointMake(0.0, - _size.width * 0.6);
+    _pieShape.XScale = -1.0;
     [_renderer.overlaySKScene addChild:_pieShape];
 }
 
