@@ -371,7 +371,7 @@ extern NSNotificationCenter *gameNotificationCenter;
     CGFloat radius = _size.width * 0.2;
     CGFloat startAngle = M_PI / 2.0;
     CGFloat endAngle = fmod(M_PI / 2.0 - uniform * M_PI * 2.0, M_PI * 2.0);
-    UIBezierPath *bezierPath = [UIBezierPath bezierPath];
+    UIBezierPath NS_VALID_UNTIL_END_OF_SCOPE *bezierPath = [UIBezierPath bezierPath];
     [bezierPath addArcWithCenter:CGPointZero radius:radius startAngle:startAngle endAngle:endAngle clockwise:YES];
     [bezierPath addLineToPoint:CGPointZero];
     [bezierPath closePath];
