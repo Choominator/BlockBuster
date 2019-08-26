@@ -17,6 +17,7 @@ extern  NSNotificationName const GameOverNotification;
 @interface Game : NSObject
 
 @property (nonatomic) BOOL paused;
+@property (nonatomic, readonly) float uniformTime;
 
 + (instancetype)gameWithWorldNode:(SCNNode *)node;
 - (void)tapNode:(SCNNode *)node;

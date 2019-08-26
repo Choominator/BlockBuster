@@ -373,4 +373,10 @@ NSNotificationName const GameOverNotification = @"GameOver";;
     }
 }
 
+- (float)uniformTime
+{
+    NSTimeInterval timeInterval = [_levelDate timeIntervalSinceNow];
+    return - timeInterval / (MIN_LEVEL_DURATION + _levelTime);
+}
+
 @end

@@ -7,7 +7,6 @@
 //
 
 @import SceneKit;
-@import SpriteKit;
 
 #import "GameViewController.h"
 #import "Game.h"
@@ -21,12 +20,14 @@ extern NSNotificationCenter *gameNotificationCenter;
     float _cameraDistance;
     Game *_game;
     SKLabelNode *_playLabel, *_scoreIncrementLabel, *_scoreLabel, *_gameOverLabel, *_pauseLabel;
+    SKShapeNode *_pieShape;
     CGPoint _panLastTranslation;
     SKAction *_fadeInAction, *_fadeOutAction, *_scoreIncrementAction;
     id<SCNSceneRenderer> _renderer;
     NSUInteger _score;
     BOOL _ignoreTaps;
     SCNLight *_cameraLight;
+    CGSize _size;
 }
 
 - (void)loadView
@@ -37,7 +38,6 @@ extern NSNotificationCenter *gameNotificationCenter;
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    _panLastTranslation = CGPointZero;;
     UIPanGestureRecognizer *panGestureRecognizer = [UIPanGestureRecognizer new];
     [panGestureRecognizer addTarget:self action:@selector(panGesture:)];
     [self.view addGestureRecognizer:panGestureRecognizer];
@@ -49,16 +49,16 @@ extern NSNotificationCenter *gameNotificationCenter;
     }
     self.view.isAccessibilityElement = YES;
     self.view.accessibilityTraits = UIAccessibilityTraitAllowsDirectInteraction;
-    _ignoreTaps = NO;
-    _paused = NO;
 }
 
 - (void)viewDidAppear:(BOOL)animated
 {
     [super viewDidAppear:animated];
+    _size = self.view.bounds.size;
     _renderer = (SCNView *) self.view;
     _renderer.scene = [self setupScene];
     _renderer.overlaySKScene = [self setupOverlay];
+    _renderer.overlaySKScene.delegate = self;
     _renderer.scene.background.contents = [UIColor blackColor];
     [self updateToSize:self.view.bounds.size];
     [gameNotificationCenter addObserver:self selector:@selector(shouldChangeBackgroundColor:) name:GameShouldChangeBackgroundColorNotification object:nil];
@@ -88,6 +88,7 @@ extern NSNotificationCenter *gameNotificationCenter;
     float angle = atan(aspectRatio * tan(CAMERA_FIELD_OF_VIEW / 180.0 * M_PI / 2.0));
     _cameraDistance = 1.0 / sin(angle);
     _cameraNode.simdPosition = simd_make_float3(0.0, 0.0, _cameraDistance);
+    _size = size;
 }
 
 - (void)panGesture:(UIGestureRecognizer *)gestureRecognizer
@@ -103,11 +104,10 @@ extern NSNotificationCenter *gameNotificationCenter;
     if (CGPointEqualToPoint(delta, CGPointZero))
         return;
     float inverseLength;
-    CGSize size = self.view.bounds.size;
-    if (size.height > size.width)
-        inverseLength = 1.0 / size.height;
+    if (_size.height > _size.width)
+        inverseLength = 1.0 / _size.height;
     else
-        inverseLength = 1.0 / size.width;
+        inverseLength = 1.0 / _size.width;
     simd_float3 axis = simd_make_float3(delta.y * inverseLength, delta.x * inverseLength, 0.0);
     float multiplier = simd_length(axis);
     float angle = multiplier * tan(CAMERA_FIELD_OF_VIEW / 180.0 * M_PI / 2.0) * (_cameraDistance - 1.0) * 4.0;
@@ -134,9 +134,7 @@ extern NSNotificationCenter *gameNotificationCenter;
                     [_game tapNode:result.node];
         }
         if (_ignoreTaps) return;
-        CGSize size = self.view.bounds.size;
-        point.x -= size.width / 2.0;
-        point.y = size.height - point.y - size.height / 2.0;
+        point = CGPointMake(point.x - _size.width / 2.0, _size.height - point.y - _size.height / 2.0);
         SKNode *node = [_renderer.overlaySKScene nodeAtPoint:point];
         if (node == _playLabel) {
             if (!_paused)
@@ -175,28 +173,27 @@ extern NSNotificationCenter *gameNotificationCenter;
 
 - (SKScene *)setupOverlay
 {
-    CGSize size = self.view.bounds.size;
-    SKShapeNode *circle = [SKShapeNode shapeNodeWithCircleOfRadius:size.width * 0.49];
+    SKShapeNode *circle = [SKShapeNode shapeNodeWithCircleOfRadius:_size.width * 0.49];
     circle.lineWidth = 2.0;
     circle.strokeColor = [UIColor whiteColor];
     circle.glowWidth = 4.0;
     circle.antialiased = YES;
     _playLabel = [SKLabelNode labelNodeWithText:@"▶"];
     _playLabel.fontColor = [UIColor whiteColor];
-    _playLabel.fontSize = size.width * 0.2;
+    _playLabel.fontSize = _size.width * 0.2;
     _playLabel.verticalAlignmentMode = SKLabelVerticalAlignmentModeCenter;
     _playLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeCenter;
     _playLabel.hidden = YES;
     _pauseLabel = [SKLabelNode labelNodeWithText:@"⏸"];
     _pauseLabel.fontColor = [UIColor whiteColor];
-    _pauseLabel.fontSize = self.view.bounds.size.width * 0.2;
-    _pauseLabel.verticalAlignmentMode = SKLabelVerticalAlignmentModeBaseline;
+    _pauseLabel.fontSize = _size.width * 0.2;
+    _pauseLabel.verticalAlignmentMode = SKLabelVerticalAlignmentModeCenter;
     _pauseLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeCenter;
-    _pauseLabel.position = CGPointMake(0.0, size.width * 0.5);
+    _pauseLabel.position = CGPointMake(0.0, _size.width * 0.6);
     _pauseLabel.hidden = YES;
     _scoreIncrementLabel = [SKLabelNode labelNodeWithText:@"0"];
     _scoreIncrementLabel.fontColor = [UIColor whiteColor];
-    _scoreIncrementLabel.fontSize = size.width * 0.6;
+    _scoreIncrementLabel.fontSize = _size.width * 0.6;
     _scoreIncrementLabel.verticalAlignmentMode = SKLabelVerticalAlignmentModeCenter;
     _scoreIncrementLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeCenter;
     _scoreIncrementLabel.hidden = YES;
@@ -204,20 +201,20 @@ extern NSNotificationCenter *gameNotificationCenter;
     [_scoreIncrementLabel setAlpha:0.0];
     _scoreLabel = [SKLabelNode labelNodeWithText:@"0"];
     _scoreLabel.fontColor = [UIColor whiteColor];
-    _scoreLabel.fontSize = size.width * 0.2;
+    _scoreLabel.fontSize = _size.width * 0.2;
     _scoreLabel.verticalAlignmentMode = SKLabelVerticalAlignmentModeCenter;
     _scoreLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeCenter;
     _scoreLabel.hidden = YES;
     _gameOverLabel = [SKLabelNode labelNodeWithText:@"Game Over"];
     _gameOverLabel.fontColor = [UIColor whiteColor];
-    _gameOverLabel.fontSize = size.width * 0.2;
-    _gameOverLabel.preferredMaxLayoutWidth = size.width * 0.6;
+    _gameOverLabel.fontSize = _size.width * 0.2;
+    _gameOverLabel.preferredMaxLayoutWidth = _size.width * 0.6;
     _gameOverLabel.lineBreakMode = NSLineBreakByWordWrapping;
     _gameOverLabel.numberOfLines = 2;
     _gameOverLabel.verticalAlignmentMode = SKLabelVerticalAlignmentModeCenter;
     _gameOverLabel.horizontalAlignmentMode = SKLabelHorizontalAlignmentModeCenter;
     _gameOverLabel.hidden = YES;
-    SKScene *scene = [SKScene sceneWithSize:size];
+    SKScene *scene = [SKScene sceneWithSize:_size];
     scene.anchorPoint = CGPointMake(0.5, 0.5);
     scene.backgroundColor = [UIColor colorWithRed:0.0 green:0.0 blue:0.0 alpha:0.0];
     [scene addChild:circle];
@@ -356,6 +353,33 @@ extern NSNotificationCenter *gameNotificationCenter;
         };
         [_playLabel runAction:_fadeOutAction completion:completion];
     }
+}
+
+- (void)update:(NSTimeInterval) currentTime forScene:(SKScene *) scene
+{
+    if (_game)
+        [self displayPieWithUniform:_game.uniformTime];
+    else
+        [self displayPieWithUniform:1.0];
+}
+
+- (void)displayPieWithUniform:(float)uniform
+{
+    if (_pieShape)
+        [_pieShape removeFromParent];
+    if (uniform == 1.0 || uniform == 0.0) return;
+    CGFloat radius = _size.width * 0.2;
+    CGFloat startAngle = M_PI / 2.0;
+    CGFloat endAngle = fmod(M_PI / 2.0 - uniform * M_PI * 2.0, M_PI * 2.0);
+    UIBezierPath *bezierPath = [UIBezierPath bezierPath];
+    [bezierPath addArcWithCenter:CGPointZero radius:radius startAngle:startAngle endAngle:endAngle clockwise:YES];
+    [bezierPath addLineToPoint:CGPointZero];
+    [bezierPath closePath];
+    CGPathRef path = [bezierPath CGPath];
+    _pieShape = [SKShapeNode shapeNodeWithPath:path centered:YES];
+    _pieShape.fillColor = [UIColor whiteColor];
+    _pieShape.position = CGPointMake(0.0, - _size.width * 0.6);
+    [_renderer.overlaySKScene addChild:_pieShape];
 }
 
 @end

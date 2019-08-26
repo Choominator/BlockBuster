@@ -7,8 +7,9 @@
 //
 
 @import UIKit;
+@import SpriteKit;
 
-@interface GameViewController : UIViewController
+@interface GameViewController : UIViewController <SKSceneDelegate>
 
 @property (nonatomic) BOOL paused;
 
