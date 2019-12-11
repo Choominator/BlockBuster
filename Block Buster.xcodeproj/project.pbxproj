@@ -27,6 +27,7 @@
 		A0247EF422EB7033009C104C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		A0247F0122EC71A0009C104C /* Game.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Game.h; sourceTree = "<group>"; };
 		A0247F0222EC71A0009C104C /* Game.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Game.m; sourceTree = "<group>"; };
+		A04D29C923A0FC5A00AA562C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
 		A08931D622F6C8AA0019BB0A /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
 		A09F4EAD22F1F46600A1D1AB /* Block.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Block.h; path = "Block Buster/Block.h"; sourceTree = SOURCE_ROOT; };
 		A09F4EAE22F1F46600A1D1AB /* Block.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = Block.m; path = "Block Buster/Block.m"; sourceTree = SOURCE_ROOT; };
@@ -46,6 +47,7 @@
 		A0247ED722EB7031009C104C = {
 			isa = PBXGroup;
 			children = (
+				A04D29C923A0FC5A00AA562C /* README.md */,
 				A08931D622F6C8AA0019BB0A /* Default-568h@2x.png */,
 				A0247EE222EB7031009C104C /* Block Buster */,
 				A0247EE122EB7031009C104C /* Products */,
