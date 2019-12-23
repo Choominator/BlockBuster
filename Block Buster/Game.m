@@ -236,17 +236,20 @@ NSNotificationName const GameOverNotification = @"GameOver";;
 
 - (void)updateTransform
 {
-    simd_float3 worldMin = simd_make_float3(WORLD_SIZE / 2.0, WORLD_SIZE / 2.0, WORLD_SIZE / 2.0);
-    simd_float3 worldMax = simd_make_float3(-WORLD_SIZE / 2.0, -WORLD_SIZE / 2.0, -WORLD_SIZE / 2.0);
+    simd_float3 worldMin = simd_make_float3(INFINITY, INFINITY, INFINITY);
+    simd_float3 worldMax = simd_make_float3(-INFINITY, -INFINITY, -INFINITY);
     NSSet<Block *> *blocks = [Block blockSet];;
     for (Block *block in blocks) {
         simd_float3 position = block.position;
-        worldMin = simd_min(simd_make_float3(position[0] - 0.5, position[1] - 0.5, position[2] - 0.5), worldMin);
-        worldMax = simd_max(simd_make_float3(position[0] + 0.5, position[1] + 0.5, position[2] + 0.5), worldMax);
+        worldMin = simd_min(position, worldMin);
+        worldMax = simd_max(position, worldMax);
     }
-    simd_float3 difference = simd_make_float3(worldMax[0] - worldMin[0], worldMax[1] - worldMin[1], worldMax[2] - worldMin[2]);
-    simd_float3 center = simd_make_float3(worldMin[0] + difference[0] / 2.0, worldMin[1] + difference[1] / 2.0, worldMin[2] + difference[2] / 2.0);
-    if (difference[0] == 0.0 && difference[1] == 0.0 && difference[2] == 0.0) return;
+    float squaredDistance = simd_distance_squared(worldMin, worldMax);
+    if (squaredDistance == INFINITY)
+        worldMax = worldMin = simd_make_float3(0.0, 0.0, 0.0);
+    simd_float3 difference = worldMax - worldMin;
+    simd_float3 center = worldMin + difference / 2.0;
+    difference += 1.0;
     float radius = simd_length(difference) / 2.0;
     float scale = 1.0 / radius * 0.98;
     [SCNTransaction begin];

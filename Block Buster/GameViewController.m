@@ -103,16 +103,12 @@ extern NSNotificationCenter *gameNotificationCenter;
         _panLastTranslation = translation;
     if (CGPointEqualToPoint(delta, CGPointZero))
         return;
-    float inverseLength;
-    if (_size.height > _size.width)
-        inverseLength = 1.0 / _size.height;
-    else
-        inverseLength = 1.0 / _size.width;
-    simd_float3 axis = simd_make_float3(delta.y * inverseLength, delta.x * inverseLength, 0.0);
+    simd_float3 axis = simd_make_float3(delta.y, delta.x, 0.0);
+    axis *= 1.0 / _size.height;
     float multiplier = simd_length(axis);
     float angle = multiplier * tan(CAMERA_FIELD_OF_VIEW / 180.0 * M_PI / 2.0) * (_cameraDistance - 1.0) * 4.0;
     multiplier = 1.0 / multiplier;
-    axis = simd_make_float3(axis[0] * multiplier, axis[1] * multiplier, axis[2] * multiplier);
+    axis *= multiplier;
     simd_quatf simdRotation = simd_quaternion(angle, axis);
     simd_quatf simdOrientation = _worldNode.simdWorldOrientation;
     simdOrientation = simd_mul(simdRotation, simdOrientation);
