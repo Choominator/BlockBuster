@@ -243,7 +243,10 @@ extern NSNotificationCenter *gameNotificationCenter;
         text = @"✕";
     _scoreIncrementLabel.text = text;
     _scoreIncrementLabel.hidden = NO;
-    void (^actions)(void) = ^{self->_scoreIncrementLabel.hidden = YES;};
+    void (^actions)(void) = ^{
+        self->_scoreIncrementLabel.hidden = YES;
+        self->_scoreLabel.scale = 0.0;
+    };
     [_scoreIncrementLabel runAction:_scoreIncrementAction completion:actions];
 }
 
@@ -379,7 +382,7 @@ extern NSNotificationCenter *gameNotificationCenter;
     _pieShape = [SKShapeNode shapeNodeWithPath:path centered:YES];
     _pieShape.fillColor = [UIColor whiteColor];
     _pieShape.position = CGPointMake(0.0, - _size.width * 0.6);
-    _pieShape.XScale = -1.0;
+    _pieShape.xScale = -1.0;
     [_renderer.overlaySKScene addChild:_pieShape];
 }
 
