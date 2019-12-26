@@ -1,10 +1,4 @@
-//
-//  main.m
-//  Block Buster
-//
-//  Created by Joao Santos on 26/07/2019.
-//  Copyright © 2019 Joao Santos. All rights reserved.
-//
+// Created by João Santos for project Block Buster.
 
 #import <UIKit/UIKit.h>
 #import "AppDelegate.h"

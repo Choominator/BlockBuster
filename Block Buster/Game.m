@@ -1,10 +1,4 @@
-//
-//  Game.m
-//  Block Buster
-//
-//  Created by Joao Santos on 27/07/2019.
-//  Copyright © 2019 Joao Santos. All rights reserved.
-//
+// Created by João Santos for project Block Buster.
 
 @import GameplayKit;
 
