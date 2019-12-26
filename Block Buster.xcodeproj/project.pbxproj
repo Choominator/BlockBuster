@@ -12,7 +12,7 @@
 		A0247EEF22EB7033009C104C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A0247EEE22EB7033009C104C /* Assets.xcassets */; };
 		A0247EF522EB7033009C104C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247EF422EB7033009C104C /* main.m */; };
 		A0247F0322EC71A0009C104C /* Game.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247F0222EC71A0009C104C /* Game.m */; };
-		A08931D722F6C8AA0019BB0A /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = A08931D622F6C8AA0019BB0A /* Default-568h@2x.png */; };
+		A09E514623B4F7B800640A87 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A09E514523B4F7B800640A87 /* Launch Screen.storyboard */; };
 		A09F4EAF22F1F46600A1D1AB /* Block.m in Sources */ = {isa = PBXBuildFile; fileRef = A09F4EAE22F1F46600A1D1AB /* Block.m */; };
 /* End PBXBuildFile section */
 
@@ -28,7 +28,7 @@
 		A0247F0122EC71A0009C104C /* Game.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Game.h; sourceTree = "<group>"; };
 		A0247F0222EC71A0009C104C /* Game.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Game.m; sourceTree = "<group>"; };
 		A04D29C923A0FC5A00AA562C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
-		A08931D622F6C8AA0019BB0A /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
+		A09E514523B4F7B800640A87 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 		A09F4EAD22F1F46600A1D1AB /* Block.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Block.h; path = "Block Buster/Block.h"; sourceTree = SOURCE_ROOT; };
 		A09F4EAE22F1F46600A1D1AB /* Block.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = Block.m; path = "Block Buster/Block.m"; sourceTree = SOURCE_ROOT; };
 /* End PBXFileReference section */
@@ -48,7 +48,6 @@
 			isa = PBXGroup;
 			children = (
 				A04D29C923A0FC5A00AA562C /* README.md */,
-				A08931D622F6C8AA0019BB0A /* Default-568h@2x.png */,
 				A0247EE222EB7031009C104C /* Block Buster */,
 				A0247EE122EB7031009C104C /* Products */,
 			);
@@ -74,6 +73,7 @@
 				A0247EE822EB7031009C104C /* GameViewController.h */,
 				A0247EE922EB7031009C104C /* GameViewController.m */,
 				A0247EEE22EB7033009C104C /* Assets.xcassets */,
+				A09E514523B4F7B800640A87 /* Launch Screen.storyboard */,
 				A0247EF322EB7033009C104C /* Info.plist */,
 				A0247EF422EB7033009C104C /* main.m */,
 			);
@@ -137,8 +137,8 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A09E514623B4F7B800640A87 /* Launch Screen.storyboard in Resources */,
 				A0247EEF22EB7033009C104C /* Assets.xcassets in Resources */,
-				A08931D722F6C8AA0019BB0A /* Default-568h@2x.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -275,7 +275,6 @@
 		A0247EF922EB7033009C104C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 752B3R6JDW;
 				INFOPLIST_FILE = "Block Buster/Info.plist";
@@ -292,7 +291,6 @@
 		A0247EFA22EB7033009C104C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 752B3R6JDW;
 				INFOPLIST_FILE = "Block Buster/Info.plist";
