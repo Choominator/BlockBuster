@@ -279,6 +279,7 @@
 		A0247EF922EB7033009C104C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 752B3R6JDW;
 				INFOPLIST_FILE = "Block Buster/Info.plist";
@@ -295,6 +296,7 @@
 		A0247EFA22EB7033009C104C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 752B3R6JDW;
 				INFOPLIST_FILE = "Block Buster/Info.plist";
