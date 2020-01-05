@@ -9,9 +9,9 @@
 /* Begin PBXBuildFile section */
 		A0247EE522EB7031009C104C /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247EE422EB7031009C104C /* AppDelegate.m */; };
 		A0247EEA22EB7031009C104C /* GameViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247EE922EB7031009C104C /* GameViewController.m */; };
-		A0247EEF22EB7033009C104C /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A0247EEE22EB7033009C104C /* Assets.xcassets */; };
 		A0247EF522EB7033009C104C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247EF422EB7033009C104C /* main.m */; };
 		A0247F0322EC71A0009C104C /* Game.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247F0222EC71A0009C104C /* Game.m */; };
+		A063758623BC9D9B00E4EFC8 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A063758523BC9D9B00E4EFC8 /* Assets.xcassets */; };
 		A09E514623B4F7B800640A87 /* Launch Screen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = A09E514523B4F7B800640A87 /* Launch Screen.storyboard */; };
 		A09F4EAF22F1F46600A1D1AB /* Block.m in Sources */ = {isa = PBXBuildFile; fileRef = A09F4EAE22F1F46600A1D1AB /* Block.m */; };
 		A0BEF81523B54FCA00D43617 /* LICENSE.txt in Resources */ = {isa = PBXBuildFile; fileRef = A0BEF81423B54FCA00D43617 /* LICENSE.txt */; };
@@ -23,12 +23,12 @@
 		A0247EE422EB7031009C104C /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
 		A0247EE822EB7031009C104C /* GameViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = GameViewController.h; sourceTree = "<group>"; };
 		A0247EE922EB7031009C104C /* GameViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = GameViewController.m; sourceTree = "<group>"; };
-		A0247EEE22EB7033009C104C /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A0247EF322EB7033009C104C /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		A0247EF422EB7033009C104C /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
 		A0247F0122EC71A0009C104C /* Game.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Game.h; sourceTree = "<group>"; };
 		A0247F0222EC71A0009C104C /* Game.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = Game.m; sourceTree = "<group>"; };
 		A04D29C923A0FC5A00AA562C /* README.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = README.md; sourceTree = "<group>"; };
+		A063758523BC9D9B00E4EFC8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A09E514523B4F7B800640A87 /* Launch Screen.storyboard */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; path = "Launch Screen.storyboard"; sourceTree = "<group>"; };
 		A09F4EAD22F1F46600A1D1AB /* Block.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = Block.h; path = "Block Buster/Block.h"; sourceTree = SOURCE_ROOT; };
 		A09F4EAE22F1F46600A1D1AB /* Block.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = Block.m; path = "Block Buster/Block.m"; sourceTree = SOURCE_ROOT; };
@@ -75,7 +75,7 @@
 				A0247EE422EB7031009C104C /* AppDelegate.m */,
 				A0247EE822EB7031009C104C /* GameViewController.h */,
 				A0247EE922EB7031009C104C /* GameViewController.m */,
-				A0247EEE22EB7033009C104C /* Assets.xcassets */,
+				A063758523BC9D9B00E4EFC8 /* Assets.xcassets */,
 				A09E514523B4F7B800640A87 /* Launch Screen.storyboard */,
 				A0247EF322EB7033009C104C /* Info.plist */,
 				A0247EF422EB7033009C104C /* main.m */,
@@ -141,8 +141,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				A0BEF81523B54FCA00D43617 /* LICENSE.txt in Resources */,
+				A063758623BC9D9B00E4EFC8 /* Assets.xcassets in Resources */,
 				A09E514623B4F7B800640A87 /* Launch Screen.storyboard in Resources */,
-				A0247EEF22EB7033009C104C /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
