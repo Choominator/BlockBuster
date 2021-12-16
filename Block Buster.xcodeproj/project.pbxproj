@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A0226AD1276B669A006E1CC4 /* Block Buster.PNG in Resources */ = {isa = PBXBuildFile; fileRef = A0226AD0276B669A006E1CC4 /* Block Buster.PNG */; };
 		A0247EE522EB7031009C104C /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247EE422EB7031009C104C /* AppDelegate.m */; };
 		A0247EEA22EB7031009C104C /* GameViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247EE922EB7031009C104C /* GameViewController.m */; };
 		A0247EF522EB7033009C104C /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = A0247EF422EB7033009C104C /* main.m */; };
@@ -18,6 +19,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		A0226AD0276B669A006E1CC4 /* Block Buster.PNG */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Block Buster.PNG"; sourceTree = "<group>"; };
 		A0247EE022EB7031009C104C /* Block Buster.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "Block Buster.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A0247EE322EB7031009C104C /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		A0247EE422EB7031009C104C /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -51,6 +53,7 @@
 			children = (
 				A04D29C923A0FC5A00AA562C /* README.md */,
 				A0BEF81423B54FCA00D43617 /* LICENSE.txt */,
+				A0226AD0276B669A006E1CC4 /* Block Buster.PNG */,
 				A0247EE222EB7031009C104C /* Block Buster */,
 				A0247EE122EB7031009C104C /* Products */,
 			);
@@ -143,6 +146,7 @@
 				A0BEF81523B54FCA00D43617 /* LICENSE.txt in Resources */,
 				A063758623BC9D9B00E4EFC8 /* Assets.xcassets in Resources */,
 				A09E514623B4F7B800640A87 /* Launch Screen.storyboard in Resources */,
+				A0226AD1276B669A006E1CC4 /* Block Buster.PNG in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
